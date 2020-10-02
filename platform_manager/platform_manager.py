@@ -100,8 +100,7 @@ async def start_platform_manager():
 
             component_specific_environment = {
                 **common_component_environment,
-                "SIMULATION_LOG_FILE": get_component_log_filename(
-                    main_log_filename, full_component_name),
+                "SIMULATION_LOG_FILE": get_component_log_filename(main_log_filename, full_component_name),
                 **component_specific_env_variables,
                 "SIMULATION_COMPONENT_NAME": full_component_name
             }

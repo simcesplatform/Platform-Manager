@@ -6,23 +6,35 @@ simulation:
     max_epochs: 24
 
     # the Docker images for the simulation manager and the log writer
-    manager_image: simulation_manager:0.3
-    logwriter_image: log_writer:0.1
+    manager_image: simulation_manager:0.4
+    logwriter_image: log_writer:0.2
 
 processes:
-    default_dummy:
-        image: dummy:0.3
+    load_1:
+        image: static-time-series-resource:0.1
+        environment:
+            RESOURCE_TYPE: Load
+            RESOURCE_STATE_CSV_FILE: /resources/load_1.csv
+
+    load_2:
+        image: static-time-series-resource:0.1
+        environment:
+            RESOURCE_TYPE: Load
+            RESOURCE_STATE_CSV_FILE: /resources/load_2.csv
+
+    generator:
+        image: static-time-series-resource:0.1
+        count: 2
+        environment:
+            RESOURCE_TYPE: Generator
+            RESOURCE_STATE_CSV_FILE: /resources/generator.csv
+
+    slow_dummy:
+        image: dummy:0.4
 
     fast_dummy:
-        image: dummy:0.3
-        count: 3
+        image: dummy:0.4
+        count: 2
         environment:
             MIN_SLEEP_TIME: 0.1
             MAX_SLEEP_TIME: 0.5
-
-    slow_dummy:
-        image: dummy:0.3
-        count: 2
-        environment:
-            MIN_SLEEP_TIME: 5
-            MAX_SLEEP_TIME: 10

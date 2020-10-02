@@ -1,0 +1,39 @@
+version: '3.5'
+
+services:
+
+    platform_manager:
+        image: platform_manager:0.1
+        build:
+            context: ..
+            dockerfile: Dockerfile
+
+    log_writer:
+        image: log_writer:0.2
+        build:
+            context: ../../logwriter
+            dockerfile: Dockerfile-log-writer
+
+    log_reader:
+        image: log_reader:0.4
+        build:
+            context: ../../logreader
+            dockerfile: Dockerfile
+
+    simulation_manager:
+        image: simulation_manager:0.4
+        build:
+            context: ../../simulation-manager
+            dockerfile: Dockerfile-manager
+
+    dummy:
+        image: dummy:0.4
+        build:
+            context: ../../simulation-manager
+            dockerfile: Dockerfile-dummy
+
+    static-time-series-resource:
+        image: static-time-series-resource:0.1
+        build:
+            context: ../../static-time-series-resource
+            dockerfile: Dockerfile
