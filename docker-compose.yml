@@ -1,0 +1,31 @@
+version: '3.5'
+
+services:
+
+  platform_manager:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: platform_manager:0.1
+    container_name: platform-manager
+    restart: "no"
+    env_file:
+      - rabbitmq.env
+      - mongodb.env
+      - common.env
+    volumes:
+      - simulation_configuration:/configuration
+      # NOTE: allowing access to host Docker socket can be a security risk
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - platform_network
+
+volumes:
+  simulation_configuration:
+    external: true
+    name: simulation_configuration
+
+networks:
+  platform_network:
+    external: false
+    name: platform_network
