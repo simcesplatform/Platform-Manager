@@ -153,10 +153,7 @@ class ContainerStarter:
                             "AutoRemove": True
                         },
                         "NetworkingConfig": {
-                            "EndpointsConfig": {
-                                network_name: {}
-                                for network_name in container_configuration.networks
-                            }
+                            "EndpointsConfig": container_configuration.networks
                         }
                     }
                 )
