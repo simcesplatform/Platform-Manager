@@ -5,8 +5,9 @@
 """
 
 import asyncio
+import json
 import logging
-from typing import cast, Dict, List
+from typing import cast, Any, Dict, List
 
 import yaml
 
@@ -314,24 +315,40 @@ class PlatformManager:
 
         all_settings = [logwriter_settings] + simulation_component_settings + [manager_settings]
 
-        LOGGER.info("Starting the containers for simulation: {:s}".format(simulation_id))
+        LOGGER.info("Starting the containers for simulation: '{:s}' with id: {:s}".format(
+            simulation_name, simulation_id))
         container_names = await self.__container_starter.start_simulation(all_settings)
 
         if container_names is None:
             LOGGER.error("A problem starting the simulation.")
             return False
 
+        await self.send_start_message(simulation_id, simulation_configuration)
+        LOGGER.info("Start message for simulation '{:s}' sent to management exchange.".format(simulation_name))
+
         manager_container_name = container_names[-1]
         identifier_start_index = len(ContainerStarter.PREFIX_START)
         identifier_end_index = identifier_start_index + ContainerStarter.PREFIX_DIGITS
         simulation_identifier = manager_container_name[identifier_start_index:identifier_end_index]
-        LOGGER.info("Simulation '{:s}' started successfully using id: {:s}.".format(simulation_name, simulation_id))
-        LOGGER.info("Follow the simulation by using the command:\n" +
+        LOGGER.info("Simulation '{:s}' started successfully using id: {:s}".format(simulation_name, simulation_id))
+        LOGGER.info("Follow the simulation by using the command: " +
                     "source follow_simulation.sh {:s}".format(simulation_identifier))
         # LOGGER.info("Follow the simulation through the simulation manager by using the command:\n" +
         #             "docker logs --follow {:s}".format(manager_container_name))
 
         return True
+
+    async def send_start_message(self, simulation_id: str, simulation_configuration: Dict[str, Any]):
+        """Sends a start message using the management exchange."""
+        start_message = {
+            "Timestamp": get_utcnow_in_milliseconds(),
+            "SimulationId": simulation_id,
+            "SimulationSpecificExchange": self.__platform_environment.get_simulation_exchange_name(simulation_id),
+            "SimulationName": simulation_configuration[SIMULATION][NAME],
+            "SimulationDescription": simulation_configuration[SIMULATION][DESCRIPTION]
+        }
+        start_message_bytes = bytes(json.dumps(start_message), encoding="utf-8")
+        await self.__rabbitmq_client.send_message(topic_name="Start", message_bytes=start_message_bytes)
 
 
 async def start_platform_manager():
@@ -341,9 +358,9 @@ async def start_platform_manager():
     configuration_filename = cast(str, EnvironmentVariable("SIMULATION_CONFIGURATION_FILE", str).value)
     await platform_manager.start_simulation(configuration_filename)
 
-    await asyncio.sleep(TIMEOUT)
+    # await asyncio.sleep(TIMEOUT)
     await platform_manager.stop()
-    await asyncio.sleep(TIMEOUT)
+    # await asyncio.sleep(TIMEOUT)
 
 
 if __name__ == "__main__":
