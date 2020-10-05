@@ -9,7 +9,7 @@ from typing import cast, Dict, List, Union
 from aiodocker import Docker
 from aiodocker.containers import DockerContainer
 
-from tools.tools import EnvironmentVariableType, FullLogger
+from tools.tools import EnvironmentVariableValue, FullLogger
 
 LOGGER = FullLogger(__name__)
 
@@ -24,14 +24,16 @@ class ContainerConfiguration:
     """Class for holding the parameters needed when starting a Docker container instance.
     Only parameters needed for starting containers for the simulation platform are included.
     """
-    def __init__(self, container_name: str, docker_image: str, environment: Dict[str, EnvironmentVariableType],
-                 networks: Union[str, List[str]], volumes: Dict[str, str]):
-        """Sets up the parameters for the Docker container configuration to the format required by aiodocker.
+    def __init__(self, container_name: str, docker_image: str, environment: Dict[str, EnvironmentVariableValue],
+                 networks: Union[str, List[str]], volumes: Union[str, List[str]]):
+        """
+        Sets up the parameters for the Docker container configuration to the format required by aiodocker.
         - container_name:    the container name
         - docker_image:      the Docker image name including a tag
         - environment:       the environment variables and their values
         - networks:          the names of the Docker networks for the container
-        - volumes:           the volume names and the target paths"""
+        - volumes:           the volume names and the target paths, format: <volume_name>:<target_path>[rw|ro]
+        """
         self.__name = container_name
         self.__image = docker_image
         self.__environment = [
@@ -49,10 +51,10 @@ class ContainerConfiguration:
                 for network_name in networks
             }
 
-        self.__volumes = [
-            ":".join([volume_name, volume_target])
-            for volume_name, volume_target in volumes.items()
-        ]
+        if isinstance(volumes, str):
+            self.__volumes = [volumes]
+        else:
+            self.__volumes = volumes
 
     @property
     def container_name(self) -> str:
