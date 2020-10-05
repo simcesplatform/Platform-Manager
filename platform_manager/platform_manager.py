@@ -322,9 +322,14 @@ class PlatformManager:
             return False
 
         manager_container_name = container_names[-1]
+        identifier_start_index = len(ContainerStarter.PREFIX_START)
+        identifier_end_index = identifier_start_index + ContainerStarter.PREFIX_DIGITS
+        simulation_identifier = manager_container_name[identifier_start_index:identifier_end_index]
         LOGGER.info("Simulation '{:s}' started successfully using id: {:s}.".format(simulation_name, simulation_id))
-        LOGGER.info("Follow the simulation through the simulation manager by using the command:\n" +
-                    "docker logs --follow {:s}".format(manager_container_name))
+        LOGGER.info("Follow the simulation by using the command:\n" +
+                    "source follow_simulation.sh {:s}".format(simulation_identifier))
+        # LOGGER.info("Follow the simulation through the simulation manager by using the command:\n" +
+        #             "docker logs --follow {:s}".format(manager_container_name))
 
         return True
 
