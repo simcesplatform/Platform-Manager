@@ -46,6 +46,7 @@ MESSAGE_BUFFER_MAX_INTERVAL = "MESSAGE_BUFFER_MAX_INTERVAL"
 
 DOCKER_NETWORK_MONGODB = "DOCKER_NETWORK_MONGODB"
 DOCKER_NETWORK_RABBITMQ = "DOCKER_NETWORK_RABBITMQ"
+DOCKER_NETWORK_PLATFORM = "DOCKER_NETWORK_PLATFORM"
 DOCKER_VOLUME_NAME_RESOURCES = "DOCKER_VOLUME_NAME_RESOURCES"
 DOCKER_VOLUME_NAME_LOGS = "DOCKER_VOLUME_NAME_LOGS"
 DOCKER_VOLUME_TARGET_RESOURCES = "DOCKER_VOLUME_TARGET_RESOURCES"
@@ -119,6 +120,7 @@ class PlatformEnvironment:
         self.__docker = load_environmental_variables(
             (DOCKER_NETWORK_MONGODB, str),
             (DOCKER_NETWORK_RABBITMQ, str),
+            (DOCKER_NETWORK_PLATFORM, str),
             (DOCKER_VOLUME_NAME_RESOURCES, str),
             (DOCKER_VOLUME_NAME_LOGS, str),
             (DOCKER_VOLUME_TARGET_RESOURCES, str),
@@ -184,7 +186,7 @@ class PlatformEnvironment:
 
     def get_docker_networks(self, rabbitmq: bool = True, mongodb: bool = False) -> List[str]:
         """Returns the names of the asked Docker networks."""
-        docker_networks = []
+        docker_networks = [cast(str, self.__docker[DOCKER_NETWORK_PLATFORM])]
         if rabbitmq and self.__docker[DOCKER_NETWORK_RABBITMQ]:
             docker_networks.append(cast(str, self.__docker[DOCKER_NETWORK_RABBITMQ]))
         if mongodb and self.__docker[DOCKER_NETWORK_MONGODB]:
@@ -322,7 +324,7 @@ class PlatformManager:
         manager_container_name = container_names[-1]
         LOGGER.info("Simulation '{:s}' started successfully using id: {:s}.".format(simulation_name, simulation_id))
         LOGGER.info("Follow the simulation through the simulation manager by using the command:\n" +
-                    "docker attach {:s}".format(manager_container_name))
+                    "docker logs --follow {:s}".format(manager_container_name))
 
         return True
 

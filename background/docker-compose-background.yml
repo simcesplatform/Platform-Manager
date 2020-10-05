@@ -12,7 +12,7 @@ services:
         env_file:
             - env/rabbitmq.env
         networks:
-            - platform_network
+            - rabbitmq_network
 
     mongodb:
         image: mongo:4.2.7
@@ -59,9 +59,9 @@ volumes:
         name: mongodb_data
 
 networks:
-    platform_network:
+    rabbitmq_network:
         external: true
-        name: platform_network
+        name: rabbitmq_network
     mongodb_network:
         external: true
         name: mongodb_network

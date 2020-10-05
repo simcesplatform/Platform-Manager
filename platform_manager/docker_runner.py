@@ -44,12 +44,9 @@ class ContainerConfiguration:
         ]
 
         if isinstance(networks, str):
-            self.__networks = {networks: {}}
+            self.__networks = [networks]
         else:
-            self.__networks = {
-                network_name: {}
-                for network_name in networks
-            }
+            self.__networks = networks
 
         if isinstance(volumes, str):
             self.__volumes = [volumes]
@@ -72,7 +69,7 @@ class ContainerConfiguration:
         return self.__environment
 
     @property
-    def networks(self) -> Dict[str, dict]:
+    def networks(self) -> List[str]:
         """The Docker networks for the Docker container."""
         return self.__networks
 
@@ -144,7 +141,13 @@ class ContainerStarter:
                     container_configuration.container_name)
                 container_names.append(full_container_name)
 
+                # The API specification for Docker Engine: https://docs.docker.com/engine/api/v1.40/
                 LOGGER.debug("Creating container: {:s}".format(full_container_name))
+                if container_configuration.networks:
+                    first_network_name = container_configuration.networks[0]
+                    first_network = {first_network_name: {}}
+                else:
+                    first_network = {}
                 container = await self.__docker_client.containers.create_or_replace(
                     name=full_container_name,
                     config={
@@ -152,16 +155,27 @@ class ContainerStarter:
                         "Env": container_configuration.environment,
                         "HostConfig": {
                             "Binds": container_configuration.volumes,
-                            "AutoRemove": True
+                            # "AutoRemove": True
                         },
                         "NetworkingConfig": {
-                            "EndpointsConfig": container_configuration.networks
+                            "EndpointsConfig": first_network
                         }
                     }
                 )
                 if not isinstance(container, DockerContainer):
                     LOGGER.warning("Failed to create container: {:s}".format(container_configuration.container_name))
                     return None
+
+                # When creating a container, it can only be connected to one network.
+                # The other networks have to be connected separately.
+                for other_network_name in container_configuration.networks[1:]:
+                    other_network = await self.__docker_client.networks.get(net_specs=other_network_name)
+                    await other_network.connect(
+                        config={
+                            "Container": full_container_name,
+                            "EndpointConfig": {}
+                        }
+                    )
                 simulation_containers.append(container)
 
             for container_name, container in zip(container_names, simulation_containers):

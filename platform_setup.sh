@@ -10,6 +10,7 @@ echo ""
 echo "Creating Docker network for the simulation platform."
 docker network create platform_network
 docker network create mongodb_network
+docker network create rabbitmq_network
 
 echo ""
 echo "Building the required Docker images for the simulation platform."
