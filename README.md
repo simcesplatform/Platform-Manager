@@ -4,8 +4,6 @@ Platform Manager handles starting new simulations for the simulation platform.
 
 ## Setup
 
-instructions for starting a local MongoDB instance for the use of the logging system can be found at [https://git.ain.rd.tut.fi/procemplus/logwriter/-/tree/master/mongodb](https://git.ain.rd.tut.fi/procemplus/logwriter/-/tree/master/mongodb).
-
 To build the required Docker images, to make the needed static files available, and to start the background processes:
 
 ```bash

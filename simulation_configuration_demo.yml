@@ -36,5 +36,5 @@ processes:
         image: dummy:0.4
         count: 2
         environment:
-            MIN_SLEEP_TIME: 0.1
-            MAX_SLEEP_TIME: 0.5
+            MIN_SLEEP_TIME: 1
+            MAX_SLEEP_TIME: 3

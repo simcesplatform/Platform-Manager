@@ -155,7 +155,7 @@ class ContainerStarter:
                         "Env": container_configuration.environment,
                         "HostConfig": {
                             "Binds": container_configuration.volumes,
-                            # "AutoRemove": True
+                            "AutoRemove": True
                         },
                         "NetworkingConfig": {
                             "EndpointsConfig": first_network
