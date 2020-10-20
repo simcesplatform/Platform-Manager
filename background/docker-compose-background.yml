@@ -47,16 +47,35 @@ services:
         depends_on:
             - mongodb
         env_file:
-            - env/log_reader.env
+            - env/components_mongodb.env
+        environment:
+            - MONGODB_APPNAME=log_writer
         ports:
             - 8180:8080
         networks:
             - mongodb_network
 
+    log_writer_management:
+        image: log_writer:0.2
+        container_name: log_writer_management
+        restart: always
+        depends_on:
+            - mongodb
+        env_file:
+            - env/components_mongodb.env
+            - env/components_logwriter.env
+        volumes:
+            - simulation_logs
+        networks:
+            - mongodb_network
+            - rabbitmq_network
 volumes:
     mongodb_data:
         external: true
         name: mongodb_data
+    simulation_logs:
+        external: true
+        name: simulation_logs
 
 networks:
     rabbitmq_network:
