@@ -5,56 +5,38 @@ simulation:
     epoch_length: 3600
     max_epochs: 24
 
-    # the Docker images for the simulation manager and the log writer
-    manager_image: simulation_manager:0.4
-    logwriter_image: log_writer:0.2
+components:  # these are the names of the component implementations
+    # the component implementations that are currently supported:
+    # - static components: Grid
+    # - dynamic components: StaticTimeSeriesResource, Dummy
 
-processes:
-    dummy:
-        image: dummy:0.4
-        count: 2
-        environment:
-            MIN_SLEEP_TIME: 2
-            MAX_SLEEP_TIME: 2
+    # duplication_count is reserved keyword and cannot be used as a parameter for a component instance
 
-    load_1:
-        image: static-time-series-resource:0.1
-        environment:
-            RESOURCE_TYPE: Load
+    StaticTimeSeriesResource:
+        load_1:                   # The name of this StaticTimeSeriesResource instance in the simulation run
+            RESOURCE_TYPE: Load   # RESOURCE_TYPE environment variable for the dynamic component
             RESOURCE_STATE_CSV_FILE: /resources/Load1.csv
-
-    load_2:
-        image: static-time-series-resource:0.1
-        environment:
+        load_2:
             RESOURCE_TYPE: Load
             RESOURCE_STATE_CSV_FILE: /resources/Load2.csv
-
-    load_3:
-        image: static-time-series-resource:0.1
-        environment:
+        load_3:
             RESOURCE_TYPE: Load
             RESOURCE_STATE_CSV_FILE: /resources/Load3.csv
-
-    load_4:
-        image: static-time-series-resource:0.1
-        environment:
+        load_4:
             RESOURCE_TYPE: Load
             RESOURCE_STATE_CSV_FILE: /resources/Load4.csv
-
-    electric_vehicle:
-        image: static-time-series-resource:0.1
-        environment:
+        electric_vehicle:
             RESOURCE_TYPE: Load
             RESOURCE_STATE_CSV_FILE: /resources/EV.csv
-
-    pv_small:
-        image: static-time-series-resource:0.1
-        environment:
+        pv_small:
             RESOURCE_TYPE: Generator
             RESOURCE_STATE_CSV_FILE: /resources/PV_small.csv
-
-    pv_large:
-        image: static-time-series-resource:0.1
-        environment:
+        pv_large:
             RESOURCE_TYPE: Generator
             RESOURCE_STATE_CSV_FILE: /resources/PV_large.csv
+
+    Dummy:
+        dummy:
+            duplication_count: 2  # Create 2 components, named dummy_1 and dummy_2, with otherwise identical parameters
+            MIN_SLEEP_TIME: 2     # MIN_SLEEP_TIME Environment variable for the dynamic component
+            MAX_SLEEP_TIME: 2
