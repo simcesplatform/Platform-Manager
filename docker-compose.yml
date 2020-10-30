@@ -21,6 +21,7 @@ services:
             - /var/run/docker.sock:/var/run/docker.sock:ro
         networks:
             - platform_network
+            - rabbitmq_network
 
 volumes:
     simulation_configuration:
@@ -37,3 +38,6 @@ networks:
     platform_network:
         external: true
         name: platform_network
+    rabbitmq_network:
+        external: true
+        name: rabbitmq_network

@@ -10,6 +10,13 @@ simulation:
     logwriter_image: log_writer:0.2
 
 processes:
+    dummy:
+        image: dummy:0.4
+        count: 2
+        environment:
+            MIN_SLEEP_TIME: 2
+            MAX_SLEEP_TIME: 2
+
     load_1:
         image: static-time-series-resource:0.1
         environment:
@@ -51,10 +58,3 @@ processes:
         environment:
             RESOURCE_TYPE: Generator
             RESOURCE_STATE_CSV_FILE: /resources/PV_large.csv
-
-    dummy:
-        image: dummy:0.4
-        count: 1
-        environment:
-            MIN_SLEEP_TIME: 2
-            MAX_SLEEP_TIME: 2

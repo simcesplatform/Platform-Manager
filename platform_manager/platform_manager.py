@@ -5,6 +5,7 @@
 """
 
 import asyncio
+import dataclasses
 import json
 import logging
 from typing import cast, Any, Dict, List
@@ -42,6 +43,11 @@ SIMULATION_MAX_EPOCHS = "SIMULATION_MAX_EPOCHS"
 SIMULATION_EPOCH_TIMER_INTERVAL = "SIMULATION_EPOCH_TIMER_INTERVAL"
 SIMULATION_MAX_EPOCH_RESENDS = "SIMULATION_MAX_EPOCH_RESENDS"
 
+SIMULATION_MANAGER_IMAGE = "SIMULATION_MANAGER_IMAGE"
+SIMULATION_LOGWRITER_IMAGE = "SIMULATION_LOGWRITER_IMAGE"
+SIMULATION_DOCKER_COMPONENTS = "SIMULATION_DOCKER_COMPONENTS"
+SIMULATION_STATIC_COMPONENTS = "SIMULATION_STATIC_COMPONENTS"
+
 MESSAGE_BUFFER_MAX_DOCUMENTS = "MESSAGE_BUFFER_MAX_DOCUMENTS"
 MESSAGE_BUFFER_MAX_INTERVAL = "MESSAGE_BUFFER_MAX_INTERVAL"
 
@@ -55,7 +61,7 @@ DOCKET_VOLUME_TARGET_LOGS = "DOCKET_VOLUME_TARGET_LOGS"
 
 # The main attributes in simulation configuration file
 SIMULATION = "simulation"
-PROCESSES = "processes"
+COMPONENTS = "components"
 
 # The overall simulation attributes in simulation configuration file
 NAME = "name"
@@ -64,20 +70,27 @@ START_TIME = "start_time"
 EPOCH_LENGTH = "epoch_length"
 MAX_EPOCHS = "max_epochs"
 
-# The Docker image attributes in simulation configuration file
-MANAGER_IMAGE = "manager_image"
-LOGWRITER_IMAGE = "logwriter_image"
-
 # The component specific attributes in simulation configuration file
-COMPONENT_IMAGE = "image"
-COMPONENT_COUNT = "count"
-COMPONENT_ENVIRONMENT = "environment"
+DUPLICATION_COUNT = "duplication_count"
+
+
+@dataclasses.dataclass
+class ImageName:
+    """Dataclass for holding Docker image names with including tags."""
+    image_name: str
+    image_tag: str = "latest"
+
+    @property
+    def full_name(self) -> str:
+        """The full Docker image name including the tag."""
+        return ":".join([self.image_name, self.image_tag])
 
 
 class PlatformEnvironment:
     """Class for holding the values for non-simulation specific environment variables."""
     def __init__(self):
         """Loads the environmental variables that are used in the simulation components."""
+        # TODO: add some checks for the parameters
 
         # setup the RabbitMQ parameters for the simulation specific exchange
         rabbitmq_env_variables = load_environmental_variables(*default_rabbitmq_definitions())
@@ -105,6 +118,23 @@ class PlatformEnvironment:
             (SIMULATION_ERROR_MESSAGE_TOPIC, str, "Error")
         )
 
+        self.__simulation_manager_image = ImageName(
+            *cast(str, EnvironmentVariable(SIMULATION_MANAGER_IMAGE, str, "").value).split(":")
+        )
+        self.__logwriter_image = ImageName(
+            *cast(str, EnvironmentVariable(SIMULATION_LOGWRITER_IMAGE, str, "").value).split(":")
+        )
+        self.__dynamic_component_types = {
+            component_type: ImageName(*image_name_parts)
+            for component_type, *image_name_parts in [
+                dynamic_component_type.split(":")
+                for dynamic_component_type in cast(
+                    str, EnvironmentVariable(SIMULATION_DOCKER_COMPONENTS, str, "").value).split(",")
+            ]
+        }
+        self.__static_component_types = cast(
+            str, EnvironmentVariable(SIMULATION_STATIC_COMPONENTS, str, "").value).split(",")
+
         # setup the simulation manager specific parameters
         self.__manager = load_environmental_variables(
             (SIMULATION_MANAGER_NAME, str),
@@ -127,6 +157,25 @@ class PlatformEnvironment:
             (DOCKER_VOLUME_TARGET_RESOURCES, str),
             (DOCKET_VOLUME_TARGET_LOGS, str)
         )
+
+    def get_dynamic_components(self) -> Dict[str, str]:
+        """Returns the supported dynamic simulation components and their full Docker image names."""
+        return {
+            component_type: image_name.full_name
+            for component_type, image_name in self.__dynamic_component_types.items()
+        }
+
+    def get_static_components(self) -> List[str]:
+        """Returns a list of the supported static simulation component types."""
+        return self.__static_component_types
+
+    def get_manager_image(self) -> str:
+        """Returns the full Docker image name for the Simulation Manager."""
+        return self.__simulation_manager_image.full_name
+
+    def get_logwriter_image(self) -> str:
+        """Returns the full Docker image name for the Log Writer."""
+        return self.__logwriter_image.full_name
 
     def get_rabbitmq_parameters(self, simulation_id: str) -> Dict[str, EnvironmentVariableValue]:
         """The simulation specific parameters for a RabbitMQ connection."""
@@ -241,6 +290,7 @@ class PlatformManager:
 
     async def start_simulation(self, simulation_configuration_file: str) -> bool:
         """Starts a new simulation using the given simulation configuration file."""
+        # TODO: divide this massive function to multiple parts
         if self.is_stopped:
             return False
 
@@ -252,30 +302,42 @@ class PlatformManager:
         simulation_id = get_utcnow_in_milliseconds()
         simulation_component_names = []
         simulation_component_settings = []
-        for component_name, component_parameters in simulation_configuration[PROCESSES].items():
-            component_image = str(component_parameters[COMPONENT_IMAGE])
-            component_count = int(component_parameters.get(COMPONENT_COUNT, 1))
-            component_specific_env_variables = component_parameters.get(COMPONENT_ENVIRONMENT, {})
+        for component_type, component_instances in simulation_configuration[COMPONENTS].items():
+            if (component_type not in self.__platform_environment.get_dynamic_components() and
+                    component_type not in self.__platform_environment.get_static_components()):
+                LOGGER.error("Unknown component type, {:s}, found in the configuration file".format(component_type))
+                return False
 
-            for index in range(1, component_count + 1):
-                if component_count == 1:
-                    full_component_name = component_name
-                else:
-                    full_component_name = "_".join([component_name, str(index)])
+            if component_type not in self.__platform_environment.get_dynamic_components():
+                # Starting simulation runs with static component types is handled by Start message.
+                # Only add the component names to the list here.
+                # NOTE: duplicate_count parameter is not supported for static components
+                simulation_component_names += list(component_instances)
+                continue
 
-                component_specific_environment = {
-                    **self.__platform_environment.get_component_parameters(
-                        simulation_id, full_component_name),
-                    **component_specific_env_variables
-                }
-                simulation_component_names.append(full_component_name)
-                simulation_component_settings.append(ContainerConfiguration(
-                    container_name=full_component_name,
-                    docker_image=component_image,
-                    environment=component_specific_environment,
-                    networks=self.__platform_environment.get_docker_networks(),
-                    volumes=self.__platform_environment.get_docker_volumes()
-                ))
+            for component_name, component_parameters in component_instances.items():
+                component_count = int(component_parameters.get(DUPLICATION_COUNT, 1))
+                component_parameters.pop(DUPLICATION_COUNT, None)
+
+                for index in range(1, component_count + 1):
+                    if component_count == 1:
+                        full_component_name = component_name
+                    else:
+                        full_component_name = "_".join([component_name, str(index)])
+
+                    component_specific_environment = {
+                        **self.__platform_environment.get_component_parameters(
+                            simulation_id, full_component_name),
+                        **component_parameters
+                    }
+                    simulation_component_names.append(full_component_name)
+                    simulation_component_settings.append(ContainerConfiguration(
+                        container_name=full_component_name,
+                        docker_image=self.__platform_environment.get_dynamic_components()[component_type],
+                        environment=component_specific_environment,
+                        networks=self.__platform_environment.get_docker_networks(),
+                        volumes=self.__platform_environment.get_docker_volumes()
+                    ))
 
         simulation_start_time = to_iso_format_datetime_string(simulation_configuration[SIMULATION][START_TIME])
         if simulation_start_time is None:
@@ -293,21 +355,16 @@ class PlatformManager:
         }
         manager_settings = ContainerConfiguration(
             container_name=manager_environment[SIMULATION_MANAGER_NAME],
-            docker_image=str(simulation_configuration[SIMULATION][MANAGER_IMAGE]),
+            docker_image=self.__platform_environment.get_manager_image(),
             environment=manager_environment,
             networks=self.__platform_environment.get_docker_networks(),
             volumes=self.__platform_environment.get_docker_volumes(resources=False)
         )
 
         logwriter_environment = self.__platform_environment.get_logwriter_parameters(simulation_id)
-        logwriter_settings = (
-            logwriter_environment[MONGODB_APPNAME],
-            str(simulation_configuration[SIMULATION][LOGWRITER_IMAGE]),
-            logwriter_environment
-        )
         logwriter_settings = ContainerConfiguration(
             container_name=cast(str, logwriter_environment[MONGODB_APPNAME]),
-            docker_image=str(simulation_configuration[SIMULATION][LOGWRITER_IMAGE]),
+            docker_image=self.__platform_environment.get_logwriter_image(),
             environment=logwriter_environment,
             networks=self.__platform_environment.get_docker_networks(mongodb=True),
             volumes=self.__platform_environment.get_docker_volumes(resources=False)
@@ -340,13 +397,25 @@ class PlatformManager:
 
     async def send_start_message(self, simulation_id: str, simulation_configuration: Dict[str, Any]):
         """Sends a start message using the management exchange."""
+        # TODO: add support for Start messages in simulation-tools
         start_message = {
             "Timestamp": get_utcnow_in_milliseconds(),
             "SimulationId": simulation_id,
             "SimulationSpecificExchange": self.__platform_environment.get_simulation_exchange_name(simulation_id),
             "SimulationName": simulation_configuration[SIMULATION][NAME],
-            "SimulationDescription": simulation_configuration[SIMULATION][DESCRIPTION]
+            "SimulationDescription": simulation_configuration[SIMULATION][DESCRIPTION],
+            "ProcessParameters": {}
         }
+        # TODO: add checking of configuration parameters, i.e. don't trust the user
+        for component_type, component_instances in simulation_configuration.get(COMPONENTS, {}).items():
+            if component_type in self.__platform_environment.get_static_components():
+                start_message["ProcessParameters"][component_type] = {}
+                for component_instance, component_parameters in component_instances.items():
+                    if DUPLICATION_COUNT in component_parameters:
+                        # NOTE: at least for now, duplication_count, is not considered for static components
+                        component_parameters.pop(DUPLICATION_COUNT, None)
+                    start_message["ProcessParameters"][component_type][component_instance] = component_parameters
+
         start_message_bytes = bytes(json.dumps(start_message), encoding="utf-8")
         await self.__rabbitmq_client.send_message(topic_name="Start", message_bytes=start_message_bytes)
 
