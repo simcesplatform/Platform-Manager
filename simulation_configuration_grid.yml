@@ -27,7 +27,7 @@ components:  # these are the names of the component implementations
     StaticTimeSeriesResource:
         load_1:                   # The name of this StaticTimeSeriesResource instance in the simulation run
             RESOURCE_TYPE: Load   # RESOURCE_TYPE environment variable for the dynamic component
-            RESOURCE_STATE_CSV_FILE: /resources/Load1_.csv
+            RESOURCE_STATE_CSV_FILE: /resources/Load1.csv
         load_2:
             RESOURCE_TYPE: Load
             RESOURCE_STATE_CSV_FILE: /resources/Load2.csv

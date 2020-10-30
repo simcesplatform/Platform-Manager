@@ -307,8 +307,12 @@ class PlatformManager:
                     component_type not in self.__platform_environment.get_static_components()):
                 LOGGER.error("Unknown component type, {:s}, found in the configuration file".format(component_type))
                 return False
-            elif component_type not in self.__platform_environment.get_dynamic_components():
+
+            if component_type not in self.__platform_environment.get_dynamic_components():
                 # Starting simulation runs with static component types is handled by Start message.
+                # Only add the component names to the list here.
+                # NOTE: duplicate_count parameter is not supported for static components
+                simulation_component_names += list(component_instances)
                 continue
 
             for component_name, component_parameters in component_instances.items():
@@ -399,17 +403,18 @@ class PlatformManager:
             "SimulationId": simulation_id,
             "SimulationSpecificExchange": self.__platform_environment.get_simulation_exchange_name(simulation_id),
             "SimulationName": simulation_configuration[SIMULATION][NAME],
-            "SimulationDescription": simulation_configuration[SIMULATION][DESCRIPTION]
+            "SimulationDescription": simulation_configuration[SIMULATION][DESCRIPTION],
+            "ProcessParameters": {}
         }
         # TODO: add checking of configuration parameters, i.e. don't trust the user
         for component_type, component_instances in simulation_configuration.get(COMPONENTS, {}).items():
             if component_type in self.__platform_environment.get_static_components():
-                start_message[component_type] = {}
+                start_message["ProcessParameters"][component_type] = {}
                 for component_instance, component_parameters in component_instances.items():
                     if DUPLICATION_COUNT in component_parameters:
                         # NOTE: at least for now, duplication_count, is not considered for static components
                         component_parameters.pop(DUPLICATION_COUNT, None)
-                    start_message[component_type][component_instance] = component_parameters
+                    start_message["ProcessParameters"][component_type][component_instance] = component_parameters
 
         start_message_bytes = bytes(json.dumps(start_message), encoding="utf-8")
         await self.__rabbitmq_client.send_message(topic_name="Start", message_bytes=start_message_bytes)
