@@ -380,7 +380,7 @@ class PlatformManager:
             LOGGER.error("A problem starting the simulation.")
             return False
 
-        await self.send_start_message(simulation_id, simulation_configuration)
+        await self.send_start_message(simulation_id, simulation_configuration, simulation_component_names)
         LOGGER.info("Start message for simulation '{:s}' sent to management exchange.".format(simulation_name))
 
         manager_container_name = container_names[-1]
@@ -395,17 +395,31 @@ class PlatformManager:
 
         return True
 
-    async def send_start_message(self, simulation_id: str, simulation_configuration: Dict[str, Any]):
+    async def send_start_message(self, simulation_id: str, simulation_configuration: Dict[str, Any],
+                                 simulation_components: List[str]):
         """Sends a start message using the management exchange."""
         # TODO: add support for Start messages in simulation-tools
+        manager_parameters = self.__platform_environment.get_manager_parameters(simulation_id)
         start_message = {
+            "Type": "Start",
             "Timestamp": get_utcnow_in_milliseconds(),
             "SimulationId": simulation_id,
             "SimulationSpecificExchange": self.__platform_environment.get_simulation_exchange_name(simulation_id),
             "SimulationName": simulation_configuration[SIMULATION][NAME],
             "SimulationDescription": simulation_configuration[SIMULATION][DESCRIPTION],
-            "ProcessParameters": {}
+            "ProcessParameters": {
+                "SimulationManager": {
+                    "ManagerName": manager_parameters[SIMULATION_MANAGER_NAME],
+                    "InitialStartTime": to_iso_format_datetime_string(simulation_configuration[SIMULATION][START_TIME]),
+                    "EpochLength": simulation_configuration[SIMULATION][EPOCH_LENGTH],
+                    "MaxEpochCount": simulation_configuration[SIMULATION][MAX_EPOCHS],
+                    "Components": simulation_components,
+                    "EpochTimerInterval": manager_parameters[SIMULATION_EPOCH_TIMER_INTERVAL],
+                    "MaxEpochResendCount": manager_parameters[SIMULATION_MAX_EPOCH_RESENDS]
+                }
+            }
         }
+
         # TODO: add checking of configuration parameters, i.e. don't trust the user
         for component_type, component_instances in simulation_configuration.get(COMPONENTS, {}).items():
             if component_type in self.__platform_environment.get_static_components():
@@ -415,6 +429,19 @@ class PlatformManager:
                         # NOTE: at least for now, duplication_count, is not considered for static components
                         component_parameters.pop(DUPLICATION_COUNT, None)
                     start_message["ProcessParameters"][component_type][component_instance] = component_parameters
+
+            # NOTE: this is just a quick addition to support including
+            #       StaticTimeSeriesResource parameters to Start message
+            elif component_type == "StaticTimeSeriesResource":
+                start_message["ProcessParameters"][component_type] = {}
+                for component_instance, component_parameters in component_instances.items():
+                    if DUPLICATION_COUNT in component_parameters:
+                        # NOTE: at least for now, duplication_count, is not considered for StaticTimeSeriesResource
+                        component_parameters.pop(DUPLICATION_COUNT, None)
+                    start_message["ProcessParameters"][component_type][component_instance] = {
+                        "ResourceType": component_parameters["RESOURCE_TYPE"],
+                        "ResourceStateFile": component_parameters["RESOURCE_STATE_CSV_FILE"]
+                    }
 
         start_message_bytes = bytes(json.dumps(start_message), encoding="utf-8")
         await self.__rabbitmq_client.send_message(topic_name="Start", message_bytes=start_message_bytes)

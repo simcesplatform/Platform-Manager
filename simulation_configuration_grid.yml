@@ -13,31 +13,31 @@ components:  # these are the names of the component implementations
     # duplication_count is reserved keyword and cannot be used as a parameter for a component instance
 
     Grid:
-        Grid:                    # The name of the Grid instance in the simulation run
-            ModelName: test      # The grid model name that will be sent as a part of the Start message
+        Grid:                      # The name of the Grid instance in the simulation run
+            ModelName: EC_Network  # The grid model name that will be sent as a part of the Start message
             Symmetrical: false
             MaxControlCount: 15
 
     Dummy:
         dummy:
             duplication_count: 2  # Create 2 components, named dummy_1 and dummy_2, with otherwise identical parameters
-            MIN_SLEEP_TIME: 2     # MIN_SLEEP_TIME Environment variable for the dynamic component
-            MAX_SLEEP_TIME: 2
+            MIN_SLEEP_TIME: 1     # MIN_SLEEP_TIME Environment variable for the dynamic component
+            MAX_SLEEP_TIME: 5
 
     StaticTimeSeriesResource:
-        load_1:                   # The name of this StaticTimeSeriesResource instance in the simulation run
+        load1:                   # The name of this StaticTimeSeriesResource instance in the simulation run
             RESOURCE_TYPE: Load   # RESOURCE_TYPE environment variable for the dynamic component
             RESOURCE_STATE_CSV_FILE: /resources/Load1.csv
-        load_2:
+        load2:
             RESOURCE_TYPE: Load
             RESOURCE_STATE_CSV_FILE: /resources/Load2.csv
-        load_3:
+        load3:
             RESOURCE_TYPE: Load
             RESOURCE_STATE_CSV_FILE: /resources/Load3.csv
-        load_4:
+        load4:
             RESOURCE_TYPE: Load
             RESOURCE_STATE_CSV_FILE: /resources/Load4.csv
-        electric_vehicle:
+        ev:
             RESOURCE_TYPE: Load
             RESOURCE_STATE_CSV_FILE: /resources/EV.csv
         pv_small:
