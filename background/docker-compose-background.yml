@@ -51,7 +51,7 @@ services:
         environment:
             - MONGODB_APPNAME=log_writer
         ports:
-            - 8180:8080
+            - 8080:8080
         networks:
             - mongodb_network
 
@@ -65,7 +65,7 @@ services:
             - env/components_mongodb.env
             - env/components_logwriter.env
         volumes:
-            - simulation_logs
+            - simulation_logs:/logs
         networks:
             - mongodb_network
             - rabbitmq_network
