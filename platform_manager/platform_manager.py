@@ -20,7 +20,8 @@ from tools.components import SIMULATION_ID, SIMULATION_COMPONENT_NAME, SIMULATIO
 from tools.datetime_tools import get_utcnow_in_milliseconds, to_iso_format_datetime_string
 from tools.db_clients import default_env_variable_definitions as default_mongodb_definitions
 from tools.tools import FullLogger, load_environmental_variables, EnvironmentVariable, EnvironmentVariableValue, \
-                        SIMULATION_LOG_LEVEL, SIMULATION_LOG_FILE, SIMULATION_LOG_FORMAT
+                        SIMULATION_LOG_LEVEL, SIMULATION_LOG_FILE, SIMULATION_LOG_FORMAT, \
+                        DEFAULT_LOGFILE_NAME, DEFAULT_LOGFILE_FORMAT
 
 LOGGER = FullLogger(__name__)
 
@@ -109,13 +110,13 @@ class PlatformEnvironment:
 
         # setup the common parameters used by all simulation components
         self.__common = load_environmental_variables(
-            (SIMULATION_LOG_LEVEL, int, logging.INFO),
-            (SIMULATION_LOG_FILE, str),
-            (SIMULATION_LOG_FORMAT, str),
+            (SIMULATION_LOG_LEVEL, int, logging.DEBUG),
+            (SIMULATION_LOG_FILE, str, DEFAULT_LOGFILE_NAME),
+            (SIMULATION_LOG_FORMAT, str, DEFAULT_LOGFILE_FORMAT),
             (SIMULATION_STATE_MESSAGE_TOPIC, str, "SimState"),
             (SIMULATION_EPOCH_MESSAGE_TOPIC, str, "Epoch"),
-            (SIMULATION_STATUS_MESSAGE_TOPIC, str, "Status"),
-            (SIMULATION_ERROR_MESSAGE_TOPIC, str, "Error")
+            (SIMULATION_STATUS_MESSAGE_TOPIC, str, "Status.Ready"),
+            (SIMULATION_ERROR_MESSAGE_TOPIC, str, "Status.Error")
         )
 
         self.__simulation_manager_image = ImageName(
@@ -137,7 +138,7 @@ class PlatformEnvironment:
 
         # setup the simulation manager specific parameters
         self.__manager = load_environmental_variables(
-            (SIMULATION_MANAGER_NAME, str),
+            (SIMULATION_MANAGER_NAME, str, "manager"),
             (SIMULATION_EPOCH_TIMER_INTERVAL, float, 30.0),
             (SIMULATION_MAX_EPOCH_RESENDS, int, 5),
         )
@@ -151,11 +152,11 @@ class PlatformEnvironment:
         self.__docker = load_environmental_variables(
             (DOCKER_NETWORK_MONGODB, str),
             (DOCKER_NETWORK_RABBITMQ, str),
-            (DOCKER_NETWORK_PLATFORM, str),
+            (DOCKER_NETWORK_PLATFORM, str, ""),
             (DOCKER_VOLUME_NAME_RESOURCES, str),
             (DOCKER_VOLUME_NAME_LOGS, str),
-            (DOCKER_VOLUME_TARGET_RESOURCES, str),
-            (DOCKET_VOLUME_TARGET_LOGS, str)
+            (DOCKER_VOLUME_TARGET_RESOURCES, str, ""),
+            (DOCKET_VOLUME_TARGET_LOGS, str, "")
         )
 
     def get_dynamic_components(self) -> Dict[str, str]:
@@ -451,7 +452,7 @@ async def start_platform_manager():
     """Starts the Simulation manager process."""
     platform_manager = PlatformManager()
 
-    configuration_filename = cast(str, EnvironmentVariable("SIMULATION_CONFIGURATION_FILE", str).value)
+    configuration_filename = cast(str, EnvironmentVariable("SIMULATION_CONFIGURATION_FILE", str, "").value)
     await platform_manager.start_simulation(configuration_filename)
 
     # await asyncio.sleep(TIMEOUT)
