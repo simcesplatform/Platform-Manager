@@ -1,42 +1,51 @@
-simulation:
-    name: "Energy community demo"
-    description: "This scenario describes the behavior of a small rural energy community of four detached houses. The houses have no controllable loads or storages but two of them have a small scale PV systems installed and one has a electric vehicle charging. Scenario spans over one day with hourly resolution (epochs)."
-    start_time: "2020-06-25T00:00:00.000+03:00"
-    epoch_length: 3600
-    max_epochs: 24
+Simulation:
+    Name: "Energy community demo"
+    Description: "This scenario describes the behavior of a small rural energy community of four detached houses. The houses have no controllable loads or storages but two of them have a small scale PV systems installed and one has a electric vehicle charging. Scenario spans over one day with hourly resolution (epochs)."
+    InitialStartTime: "2020-06-25T00:00:00.000+03:00"
+    EpochLength: 3600
+    MaxEpochCount: 24
 
-components:  # these are the names of the component implementations
+    # Optional settings for the Simulation Manager
+    ManagerName: "simulation-manager"
+    EpochTimerInterval: 30
+    MaxEpochResendCount: 5
+
+    # Optional settings for the Log Writer
+    MessageBufferMaxDocumentCount: 10
+    MessageBufferMaxInterval: 5.0
+
+Components:  # these are the names of the component implementations
     # the component implementations that are currently supported:
     # - static components: Grid
     # - dynamic components: StaticTimeSeriesResource, Dummy
 
     # duplication_count is reserved keyword and cannot be used as a parameter for a component instance
 
-    StaticTimeSeriesResource:
-        load_1:                   # The name of this StaticTimeSeriesResource instance in the simulation run
-            RESOURCE_TYPE: Load   # RESOURCE_TYPE environment variable for the dynamic component
-            RESOURCE_STATE_CSV_FILE: /resources/Load1.csv
-        load_2:
-            RESOURCE_TYPE: Load
-            RESOURCE_STATE_CSV_FILE: /resources/Load2.csv
-        load_3:
-            RESOURCE_TYPE: Load
-            RESOURCE_STATE_CSV_FILE: /resources/Load3.csv
-        load_4:
-            RESOURCE_TYPE: Load
-            RESOURCE_STATE_CSV_FILE: /resources/Load4.csv
-        electric_vehicle:
-            RESOURCE_TYPE: Load
-            RESOURCE_STATE_CSV_FILE: /resources/EV.csv
-        pv_small:
-            RESOURCE_TYPE: Generator
-            RESOURCE_STATE_CSV_FILE: /resources/PV_small.csv
-        pv_large:
-            RESOURCE_TYPE: Generator
-            RESOURCE_STATE_CSV_FILE: /resources/PV_large.csv
-
     Dummy:
         dummy:
             duplication_count: 2  # Create 2 components, named dummy_1 and dummy_2, with otherwise identical parameters
-            MIN_SLEEP_TIME: 2     # MIN_SLEEP_TIME Environment variable for the dynamic component
-            MAX_SLEEP_TIME: 2
+            MinSleepTime: 1.5  # the attributes used in the Start message, corresponds to the
+            MaxSleepTime: 3.0  # MIN_SLEEP_TIME and MAX_SLEEP_TIME environment variables for the Dummy component
+
+    StaticTimeSeriesResource:
+        load_1:                  # The name of this StaticTimeSeriesResource instance in the simulation run
+            ResourceType: Load   # RESOURCE_TYPE environment variable for the dynamic component
+            ResourceStateFile: /resources/Load1.csv
+        load_2:
+            ResourceType: Load
+            ResourceStateFile: /resources/Load2.csv
+        load_3:
+            ResourceType: Load
+            ResourceStateFile: /resources/Load3.csv
+        load_4:
+            ResourceType: Load
+            ResourceStateFile: /resources/Load4.csv
+        electric_vehicle:
+            ResourceType: Load
+            ResourceStateFile: /resources/EV.csv
+        pv_small:
+            ResourceType: Generator
+            ResourceStateFile: /resources/PV_small.csv
+        pv_large:
+            ResourceType: Generator
+            ResourceStateFile: /resources/PV_large.csv
