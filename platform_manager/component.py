@@ -86,12 +86,15 @@ class ComponentParameters:
 
 @dataclasses.dataclass
 class ComponentCollectionParameters:
-    """ComponentCollectionParameters"""
+    """
+    Data class for holding information about the supported component types and their parameters.
+    - component_types: a dictionary containing information about each of the supported component types
+    """
     component_types: Dict[str, ComponentParameters] = dataclasses.field(default_factory=dict)
 
 
 def load_component_parameters_from_json(json_filename: str) -> ComponentCollectionParameters:
-    """load_component_parameters_from_json"""
+    """Loads and returns the component type specification from a JSON file."""
     component_types = {}
     try:
         with open(json_filename, mode="r", encoding="UTF-8") as component_file:
