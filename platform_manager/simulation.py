@@ -7,6 +7,7 @@ This module contains data classes for storing the configuration for a single sim
 import dataclasses
 from typing import Any, Dict, Optional
 import yaml
+import yaml.parser
 
 from tools.datetime_tools import get_utcnow_in_milliseconds
 from tools.tools import FullLogger
@@ -150,7 +151,7 @@ def load_simulation_parameters_from_yaml(yaml_filename: str) -> Optional[Simulat
             components=component_configurations
         )
 
-    except OSError as yaml_error:
+    except (OSError, KeyError, yaml.parser.ParserError) as yaml_error:
         LOGGER.error("Encountered '{}' exception when loading simulation run specification from '{}': {}".format(
             str(type(yaml_error)), yaml_filename, yaml_error
         ))
