@@ -31,6 +31,18 @@ ATTRIBUTE_DEFAULT = "Default"
 
 
 @dataclasses.dataclass
+class ImageName:
+    """Dataclass for holding Docker image name including the tag part."""
+    image_name: str
+    image_tag: str = "latest"
+
+    @property
+    def full_name(self) -> str:
+        """The full Docker image name including the tag."""
+        return ":".join([self.image_name, self.image_tag])
+
+
+@dataclasses.dataclass
 class ComponentAttribute:
     """
     Data class for holding information about an attribute for a component type.
@@ -65,18 +77,24 @@ class ComponentParameters:
     """
     component_type: str
     description: str = ""
-    docker_image: Optional[str] = None
+    docker_image: Optional[ImageName] = None
     attributes: Dict[str, ComponentAttribute] = dataclasses.field(default_factory=dict)
     include_rabbitmq_parameters: bool = True
     include_mongodb_parameters: bool = False
     include_general_parameters: bool = True
 
 
-def load_component_parameters_from_json(filename: str) -> Dict[str, ComponentParameters]:
+@dataclasses.dataclass
+class ComponentCollectionParameters:
+    """ComponentCollectionParameters"""
+    component_types: Dict[str, ComponentParameters] = dataclasses.field(default_factory=dict)
+
+
+def load_component_parameters_from_json(json_filename: str) -> ComponentCollectionParameters:
     """load_component_parameters_from_json"""
     component_types = {}
     try:
-        with open(filename, mode="r", encoding="UTF-8") as component_file:
+        with open(json_filename, mode="r", encoding="UTF-8") as component_file:
             component_type_definitions = json.load(component_file)
             for component_type, component_type_definition in component_type_definitions.items():
                 deployment_type = component_type_definition.get(PARAMETER_COMPONENT_TYPE, None)
@@ -88,10 +106,13 @@ def load_component_parameters_from_json(filename: str) -> Dict[str, ComponentPar
 
                 # TODO: add some validation checks for the other parameters in the JSON file
 
+                docker_image = component_type_definition.get(PARAMETER_DOCKER_IMAGE, None)
+                if docker_image is not None:
+                    docker_image = ImageName(*docker_image.split(":"))
                 component_types[component_type] = ComponentParameters(
                     component_type=deployment_type,
                     description=component_type_definition.get(PARAMETER_DESCRIPTION, ""),
-                    docker_image=component_type_definition.get(PARAMETER_DOCKER_IMAGE, None),
+                    docker_image=docker_image,
                     attributes={
                         attribute_name: ComponentAttribute(
                             environment=attribute_definition.get(ATTRIBUTE_ENVIRONMENT, None),
@@ -106,11 +127,11 @@ def load_component_parameters_from_json(filename: str) -> Dict[str, ComponentPar
                     include_general_parameters=deployment_type != STATIC_COMPONENT_TYPE
                 )
 
-        LOGGER.debug("Loaded definitions for {} component types from {}".format(len(component_types), filename))
-        return component_types
+        LOGGER.debug("Loaded definitions for {} component types from {}".format(len(component_types), json_filename))
 
     except (OSError, json.decoder.JSONDecodeError) as json_error:
         LOGGER.error("Encountered '{}' exception when loading component type definitions from '{}': {}".format(
-            str(type(json_error)), filename, json_error
+            str(type(json_error)), json_filename, json_error
         ))
-        return {}
+
+    return ComponentCollectionParameters(component_types)
