@@ -21,6 +21,28 @@
     "Grid":
     {
         "Type": "static",
-        "Description": "Statically deployed Grid component"
+        "Description": "Statically deployed Grid component",
+        "Attributes":
+        {
+            "ModelName":
+            {
+                "Optional": false
+            },
+            "Symmetrical":
+            {
+                "Optional": true,
+                "Default": false
+            },
+            "MaxControlCount":
+            {
+                "Optional": true,
+                "Default": 15
+            },
+            "ModelVoltageBand":
+            {
+                "Optional": true,
+                "Default": 0.15
+            }
+        }
     }
 }
