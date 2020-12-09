@@ -144,9 +144,10 @@ class PlatformEnvironment:
         return docker_networks
 
     def get_docker_volumes(self, resources: bool = True, logs: bool = True) -> List[str]:
-        """Returns the binding of the Docker volumes.
-           Resources volume is used for static files and logs volume is used for log output.
-           The format for the binding values are: <volume_name>:<folder_name>[:<rw|ro>]
+        """
+        Returns the binding of the Docker volumes.
+        Resources volume is used for static files and logs volume is used for log output.
+        The format for the binding values are: <volume_name>:<folder_name>[:<rw|ro>]
         """
         docker_volumes = []
         if resources and self.__docker[DOCKER_VOLUME_NAME_RESOURCES]:
@@ -163,7 +164,7 @@ class PlatformEnvironment:
 
     def get_start_message_variables(self, component_type: str, component_attributes: SimulationComponentConfiguration) \
             -> Optional[Dict[str, Any]]:
-        """get_environmental_variables"""
+        """Returns the process parameter block for the Start message for the given component type."""
         component_type_parameters = self.__supported_component_types.component_types.get(component_type, None)
         if component_type_parameters is None:
             LOGGER.warning("Component type '{}' is not supported".format(component_type))
@@ -211,7 +212,7 @@ class PlatformEnvironment:
     def get_environmental_variables(self, component_type: str, simulation_id: str, component_name: str,
                                     component_attributes: SimulationComponentConfiguration) \
             -> Optional[Dict[str, EnvironmentVariableValue]]:
-        """get_environmental_variables"""
+        """Returns the environment variables for a simulation component."""
         component_type_parameters = self.__supported_component_types.component_types.get(component_type, None)
         if component_type_parameters is None:
             LOGGER.warning("Component type '{}' is not supported".format(component_type))
@@ -254,7 +255,7 @@ class PlatformEnvironment:
 
     def get_container_configurations(self, simulation_configuration: SimulationConfiguration) -> \
             Optional[List[ContainerConfiguration]]:
-        """get_container_configurations"""
+        """Returns a list containing the Docker container configurations for a new simulation run."""
         container_configurations = []
 
         for component_type in ([COMPONENT_TYPE_LOG_WRITER] +
@@ -269,31 +270,10 @@ class PlatformEnvironment:
                 # No Docker containers are created for static components
                 continue
 
-            # Core components can have only instance of each type while the other dynamic components can have multiple
-            # instances in the same simulation run. Gather the component names and configurations first to allow
-            # uniform creation for the container configuration.
-            if component_type_settings.component_type == CORE_COMPONENT_TYPE:
-                if component_type == COMPONENT_TYPE_SIMULATION_MANAGER:
-                    # setup the simulation manager name and the configuration
-                    component_configuration = simulation_configuration.simulation.manager_configuration
-                    if SIMULATION_MANAGER_NAME in component_configuration.attributes:
-                        component_name = cast(str, component_configuration.attributes[SIMULATION_COMPONENT_NAME])
-                    else:
-                        component_name = cast(str, component_type_settings.attributes[SIMULATION_MANAGER_NAME])
-
-                elif component_type == COMPONENT_TYPE_LOG_WRITER:
-                    # setup the log writer name and the configuration
-                    component_configuration = simulation_configuration.simulation.logwriter_configuration
-                    component_name = cast(str, self.__mongodb[MONGODB_APPNAME])
-
-                else:
-                    LOGGER.error("Encountered unknown core component type: {}".format(component_type))
-                    return None
-
-                component_instance_dictionary = {component_name: component_configuration}
-
-            else:
-                component_instance_dictionary = simulation_configuration.components[component_type].processes
+            component_instance_dictionary = self.__get_component_processes(component_type, simulation_configuration)
+            if component_instance_dictionary is None:
+                LOGGER.error("Encountered unknown core component type: {}".format(component_type))
+                return None
 
             # Go through each instance for each of the dynamic component type.
             for component_name, component_configuration in component_instance_dictionary.items():
@@ -333,7 +313,7 @@ class PlatformEnvironment:
         return container_configurations
 
     def get_start_message(self, simulation_configuration: SimulationConfiguration) -> Optional[Dict[str, Any]]:
-        """get_start_message"""
+        """Returns a Start message corresponding to the given configuration for a simulation run."""
         simulation_id = simulation_configuration.simulation.simulation_id
 
         manager_configuration = simulation_configuration.simulation.manager_configuration
@@ -402,3 +382,38 @@ class PlatformEnvironment:
 
         self.__supported_component_types.add_type(component_type, component_type_parameters)
         return True
+
+    def __get_component_processes(self, component_type: str, simulation_configuration: SimulationConfiguration) \
+            -> Optional[Dict[str, SimulationComponentConfiguration]]:
+        """
+        Returns a dictionary containing the configuration for the processes for the given component type.
+
+        Core components can have only instance of each type while the other dynamic components can have multiple
+        instances in the same simulation run. Gathers the component names and configurations first to allow
+        uniform creation for the container configuration for both core and domain components.
+        """
+        component_type_settings = self.__supported_component_types.component_types[component_type]
+        if component_type_settings.component_type == CORE_COMPONENT_TYPE:
+            if component_type == COMPONENT_TYPE_SIMULATION_MANAGER:
+                # setup the simulation manager name and the configuration
+                component_configuration = simulation_configuration.simulation.manager_configuration
+                if SIMULATION_MANAGER_NAME in component_configuration.attributes:
+                    component_name = cast(str, component_configuration.attributes[SIMULATION_COMPONENT_NAME])
+                else:
+                    component_name = cast(str, component_type_settings.attributes[SIMULATION_MANAGER_NAME])
+
+            elif component_type == COMPONENT_TYPE_LOG_WRITER:
+                # setup the log writer name and the configuration
+                component_configuration = simulation_configuration.simulation.logwriter_configuration
+                component_name = cast(str, self.__mongodb[MONGODB_APPNAME])
+
+            else:
+                LOGGER.error("Encountered unknown core component type: {}".format(component_type))
+                return None
+
+            component_instance_dictionary = {component_name: component_configuration}
+
+        else:
+            component_instance_dictionary = simulation_configuration.components[component_type].processes
+
+        return component_instance_dictionary

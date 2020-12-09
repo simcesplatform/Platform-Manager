@@ -34,6 +34,10 @@ SIMULATION_MAX_EPOCH_RESEND_COUNT = "MaxEpochResendCount"
 MESSAGE_BUFFER_MAX_DOCUMENTS = "MessageBufferMaxDocumentCount"
 MESSAGE_BUFFER_MAX_INTERVAL = "MessageBufferMaxInterval"
 
+# The attribute names for simulation name and description for the simulation manager
+SIMULATION_NAME_FOR_MANAGER = "SimulationName"
+SIMULATION_DESCRIPTION_FOR_MANAGER = "SimulationDescription"
+
 # The special attribute that can be used to create multiple identical components for the simulation
 DUPLICATION_COUNT = "duplication_count"
 
@@ -127,16 +131,16 @@ def load_simulation_parameters_from_yaml(yaml_filename: str) -> Optional[Simulat
         simulation_configuration = yaml_configuration.get(SIMULATION, {})
 
         manager_attributes = {
-            "InitialStartTime": to_iso_format_datetime_string(
+            SIMULATION_START_TIME: to_iso_format_datetime_string(
                 simulation_configuration.get(SIMULATION_START_TIME, None)),
-            "EpochLength": simulation_configuration.get(SIMULATION_EPOCH_LENGTH, None),
-            "MaxEpochCount": simulation_configuration.get(SIMULATION_MAX_EPOCH_COUNT, None),
-            "ManagerName": simulation_configuration.get(SIMULATION_MANAGER_NAME, None),
-            "EpochTimerInterval": simulation_configuration.get(SIMULATION_EPOCH_TIMER_INTERVAL, None),
-            "MaxEpochResendCount": simulation_configuration.get(SIMULATION_MAX_EPOCH_RESEND_COUNT, None),
-            "SimulationName": simulation_configuration.get(SIMULATION_NAME, None),
-            "SimulationDescription": simulation_configuration.get(SIMULATION_DESCRIPTION, None),
-            "Components": [
+            SIMULATION_EPOCH_LENGTH: simulation_configuration.get(SIMULATION_EPOCH_LENGTH, None),
+            SIMULATION_MAX_EPOCH_COUNT: simulation_configuration.get(SIMULATION_MAX_EPOCH_COUNT, None),
+            SIMULATION_MANAGER_NAME: simulation_configuration.get(SIMULATION_MANAGER_NAME, None),
+            SIMULATION_EPOCH_TIMER_INTERVAL: simulation_configuration.get(SIMULATION_EPOCH_TIMER_INTERVAL, None),
+            SIMULATION_MAX_EPOCH_RESEND_COUNT: simulation_configuration.get(SIMULATION_MAX_EPOCH_RESEND_COUNT, None),
+            SIMULATION_NAME_FOR_MANAGER: simulation_configuration.get(SIMULATION_NAME, None),
+            SIMULATION_DESCRIPTION_FOR_MANAGER: simulation_configuration.get(SIMULATION_DESCRIPTION, None),
+            COMPONENTS: [
                 component_name
                 for _, processes in component_configurations.items()
                 for component_name in processes.processes
@@ -145,8 +149,8 @@ def load_simulation_parameters_from_yaml(yaml_filename: str) -> Optional[Simulat
 
         # load the log writer parameters for the simulation run
         log_writer_attributes = {
-            "MessageBufferMaxDocumentCount": simulation_configuration.get(MESSAGE_BUFFER_MAX_DOCUMENTS, None),
-            "MessageBufferMaxInterval": simulation_configuration.get(MESSAGE_BUFFER_MAX_INTERVAL, None)
+            MESSAGE_BUFFER_MAX_DOCUMENTS: simulation_configuration.get(MESSAGE_BUFFER_MAX_DOCUMENTS, None),
+            MESSAGE_BUFFER_MAX_INTERVAL: simulation_configuration.get(MESSAGE_BUFFER_MAX_INTERVAL, None)
         }
 
         # collect all the general simulation parameters

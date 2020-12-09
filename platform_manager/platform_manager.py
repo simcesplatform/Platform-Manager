@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-"""This module contains the Platform Manager code that handles the starting of the simulation components for
-   a simulation using the simulation platform.
+"""
+This module contains the Platform Manager code that handles the starting of the simulation components for
+a simulation using the simulation platform.
 """
 
 import asyncio
@@ -109,7 +110,7 @@ class PlatformManager:
 
 
 async def start_platform_manager():
-    """Starts the Simulation manager process."""
+    """Starts the Platform manager process."""
     platform_manager = PlatformManager()
 
     configuration_filename = cast(str, EnvironmentVariable(SIMULATION_CONFIGURATION_FILE, str, "").value)
