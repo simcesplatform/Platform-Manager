@@ -102,9 +102,9 @@ class PlatformManager:
         simulation_identifier = manager_container_name[identifier_start_index:identifier_end_index]
         LOGGER.info("Simulation '{:s}' started successfully using id: {:s}".format(simulation_name, simulation_id))
         LOGGER.info("Follow the simulation by using the command:\n" +
-                    "\tsource follow_simulation.sh {:s}".format(simulation_identifier))
+                    "    source follow_simulation.sh {:s}".format(simulation_identifier))
         LOGGER.info("Alternatively, the simulation manager logs can by viewed by:\n" +
-                    "\tdocker logs --follow {:s}".format(manager_container_name))
+                    "    docker logs --follow {:s}".format(manager_container_name))
 
         return True
 

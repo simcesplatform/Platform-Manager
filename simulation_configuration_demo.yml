@@ -1,26 +1,26 @@
-simulation:
-    name: "Test simulation with platform manager."
-    description: "This is a description text for this simulation."
-    start_time: "2020-10-01T00:00:00.000Z"
-    epoch_length: 3600
-    max_epochs: 24
+Simulation:
+    Name: "Test simulation with platform manager."
+    Description: "This is a description text for this simulation."
+    InitialStartTime: "2020-10-01T00:00:00.000Z"
+    EpochLength: 3600
+    MaxEpochCount: 24
 
-components:
+Components:
     StaticTimeSeriesResource:
         load_1:
-            RESOURCE_TYPE: Load
-            RESOURCE_STATE_CSV_FILE: /resources/load_1.csv
+            ResourceType: Load
+            ResourceStateFile: /resources/load_1.csv
         load_2:
-            RESOURCE_TYPE: Load
-            RESOURCE_STATE_CSV_FILE: /resources/load_2.csv
+            ResourceType: Load
+            ResourceStateFile: /resources/load_2.csv
         generator:
             duplication_count: 2
-            RESOURCE_TYPE: Generator
-            RESOURCE_STATE_CSV_FILE: /resources/generator.csv
+            ResourceType: Generator
+            ResourceStateFile: /resources/generator.csv
 
     Dummy:
         slow_dummy: {}
         fast_dummy:
             duplication_count: 2
-            MIN_SLEEP_TIME: 1
-            MAX_SLEEP_TIME: 3
+            MinSleepTime: 0.5
+            MaxSleepTime: 1.5

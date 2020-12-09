@@ -41,6 +41,8 @@ SIMULATION_DESCRIPTION_FOR_MANAGER = "SimulationDescription"
 # The special attribute that can be used to create multiple identical components for the simulation
 DUPLICATION_COUNT = "duplication_count"
 
+DUPLICATE_CONTAINER_NAME_SEPARATOR = "_"
+
 
 def remove_nones(dictionary: dict) -> dict:
     """remove_nones"""
@@ -141,9 +143,11 @@ def load_simulation_parameters_from_yaml(yaml_filename: str) -> Optional[Simulat
             SIMULATION_NAME_FOR_MANAGER: simulation_configuration.get(SIMULATION_NAME, None),
             SIMULATION_DESCRIPTION_FOR_MANAGER: simulation_configuration.get(SIMULATION_DESCRIPTION, None),
             COMPONENTS: [
-                component_name
+                component_name if component_configuration.duplication_count == 1
+                else DUPLICATE_CONTAINER_NAME_SEPARATOR.join([component_name, str(index)])
                 for _, processes in component_configurations.items()
-                for component_name in processes.processes
+                for component_name, component_configuration in processes.processes.items()
+                for index in range(1, component_configuration.duplication_count + 1)
             ]
         }
 

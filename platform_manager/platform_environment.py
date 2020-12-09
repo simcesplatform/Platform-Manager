@@ -13,7 +13,7 @@ from platform_manager.component import CORE_COMPONENT_TYPE, STATIC_COMPONENT_TYP
                                        COMPONENT_TYPE_SIMULATION_MANAGER, COMPONENT_TYPE_LOG_WRITER
 from platform_manager.docker_runner import ContainerConfiguration
 from platform_manager.simulation import SimulationConfiguration, SimulationComponentConfiguration, \
-                                        SIMULATION_MANAGER_NAME
+                                        DUPLICATE_CONTAINER_NAME_SEPARATOR, SIMULATION_MANAGER_NAME
 from tools.clients import default_env_variable_definitions as default_rabbitmq_definitions
 from tools.components import SIMULATION_COMPONENT_NAME, SIMULATION_ID, SIMULATION_STATE_MESSAGE_TOPIC, \
                              SIMULATION_EPOCH_MESSAGE_TOPIC, SIMULATION_STATUS_MESSAGE_TOPIC, \
@@ -45,8 +45,6 @@ DOCKER_VOLUME_NAME_RESOURCES = "DOCKER_VOLUME_NAME_RESOURCES"
 DOCKER_VOLUME_NAME_LOGS = "DOCKER_VOLUME_NAME_LOGS"
 DOCKER_VOLUME_TARGET_RESOURCES = "DOCKER_VOLUME_TARGET_RESOURCES"
 DOCKET_VOLUME_TARGET_LOGS = "DOCKET_VOLUME_TARGET_LOGS"
-
-DUPLICATE_CONTAINER_NAME_SEPARATOR = "_"
 
 START = "Start"
 START_MESSAGE_TYPE = "Type"
@@ -223,8 +221,8 @@ class PlatformEnvironment:
 
         # go through all the attributes found in the simulation run specification
         for attribute_name, attribute_value in component_attributes.attributes.items():
-            if attribute_name in component_attributes.attributes:
-                env_variable_name = component_attributes.attributes[attribute_name].environment
+            if attribute_name in component_type_parameters.attributes:
+                env_variable_name = component_type_parameters.attributes[attribute_name].environment
                 if env_variable_name is None:
                     env_variable_name = attribute_name
             else:
@@ -316,20 +314,6 @@ class PlatformEnvironment:
         """Returns a Start message corresponding to the given configuration for a simulation run."""
         simulation_id = simulation_configuration.simulation.simulation_id
 
-        manager_configuration = simulation_configuration.simulation.manager_configuration
-        if SIMULATION_MANAGER_NAME in manager_configuration.attributes:
-            manager_name = cast(str, manager_configuration.attributes[SIMULATION_COMPONENT_NAME])
-        else:
-            manager_name = cast(
-                str,
-                self.__supported_component_types
-                .component_types[COMPONENT_TYPE_SIMULATION_MANAGER]
-                .attributes[SIMULATION_MANAGER_NAME]
-            )
-
-        log_writer_name = cast(str, self.__mongodb[MONGODB_APPNAME])
-        log_writer_configuration = simulation_configuration.simulation.logwriter_configuration
-
         # The general part of the Start message including the parameters for simulation manager and log writer
         start_message = {
             START_MESSAGE_TYPE: START,
@@ -340,9 +324,14 @@ class PlatformEnvironment:
             START_MESSAGE_DESCRIPTION: simulation_configuration.simulation.description,
             START_MESSAGE_PROCESS_PARAMETERS:
             {
-                manager_name: self.get_start_message_variables(
-                    COMPONENT_TYPE_SIMULATION_MANAGER, manager_configuration),
-                log_writer_name: self.get_start_message_variables(COMPONENT_TYPE_LOG_WRITER, log_writer_configuration)
+                COMPONENT_TYPE_SIMULATION_MANAGER: self.get_start_message_variables(
+                    component_type=COMPONENT_TYPE_SIMULATION_MANAGER,
+                    component_attributes=simulation_configuration.simulation.manager_configuration
+                ),
+                COMPONENT_TYPE_LOG_WRITER: self.get_start_message_variables(
+                    component_type=COMPONENT_TYPE_LOG_WRITER,
+                    component_attributes=simulation_configuration.simulation.logwriter_configuration
+                )
             }
         }
 
@@ -398,9 +387,9 @@ class PlatformEnvironment:
                 # setup the simulation manager name and the configuration
                 component_configuration = simulation_configuration.simulation.manager_configuration
                 if SIMULATION_MANAGER_NAME in component_configuration.attributes:
-                    component_name = cast(str, component_configuration.attributes[SIMULATION_COMPONENT_NAME])
+                    component_name = cast(str, component_configuration.attributes[SIMULATION_MANAGER_NAME])
                 else:
-                    component_name = cast(str, component_type_settings.attributes[SIMULATION_MANAGER_NAME])
+                    component_name = cast(str, component_type_settings.attributes[SIMULATION_MANAGER_NAME].default)
 
             elif component_type == COMPONENT_TYPE_LOG_WRITER:
                 # setup the log writer name and the configuration

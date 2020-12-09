@@ -123,7 +123,7 @@ def get_component_type_parameters(component_type_definition: Dict[str, Any]) -> 
         attributes={
             attribute_name: ComponentAttribute(
                 environment=attribute_definition.get(ATTRIBUTE_ENVIRONMENT, None),
-                optional=attribute_definition.get(ATTRIBUTE_DEFAULT, False),
+                optional=attribute_definition.get(ATTRIBUTE_OPTIONAL, False),
                 default=attribute_definition.get(ATTRIBUTE_DEFAULT, None),
                 include_in_start=attribute_definition.get(ATTRIBUTE_INCLUDE_IN_START, True)
             )
