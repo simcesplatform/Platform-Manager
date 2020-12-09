@@ -4,9 +4,10 @@
 This module contains data classes for storing information about the components that the Platform Manager supports.
 """
 
+from __future__ import annotations
 import dataclasses
 import json
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 from tools.tools import FullLogger
 
@@ -28,6 +29,7 @@ PARAMETER_ATTRIBUTES = "Attributes"
 ATTRIBUTE_ENVIRONMENT = "Environment"
 ATTRIBUTE_OPTIONAL = "Optional"
 ATTRIBUTE_DEFAULT = "Default"
+ATTRIBUTE_INCLUDE_IN_START = "IncludeInStart"
 
 
 @dataclasses.dataclass
@@ -49,12 +51,14 @@ class ComponentAttribute:
     - environment: a string corresponding to the environmental variable name for the attribute,
                    should be None for an attribute for a static component
     - optional: a boolean value telling whether the attribute is optional or not
-    - default: a string representing the default value for the attribute,
+    - default: a number, string or a boolean value representing the default value for the attribute,
                all optional attributes should have a default value
+    - include_in_start: a boolean value telling whether to include this attribute in the Start message
     """
     environment: Optional[str] = None
     optional: bool = False
-    default: Optional[str] = None
+    default: Optional[Union[int, float, bool, str]] = None
+    include_in_start: bool = True
 
 
 @dataclasses.dataclass
@@ -92,6 +96,14 @@ class ComponentCollectionParameters:
     """
     component_types: Dict[str, ComponentParameters] = dataclasses.field(default_factory=dict)
 
+    def add_type(self, component_type: str, component_parameters: ComponentParameters):
+        """Combines the given component parameters to the current collection."""
+        self.component_types[component_type] = component_parameters
+
+    def add_types(self, other_parameter_colletion: ComponentCollectionParameters):
+        """Combines the given parameter collection to the current collection."""
+        self.component_types = {**self.component_types, **other_parameter_colletion.component_types}
+
 
 def load_component_parameters_from_json(json_filename: str) -> ComponentCollectionParameters:
     """Loads and returns the component type specification from a JSON file."""
@@ -120,7 +132,8 @@ def load_component_parameters_from_json(json_filename: str) -> ComponentCollecti
                         attribute_name: ComponentAttribute(
                             environment=attribute_definition.get(ATTRIBUTE_ENVIRONMENT, None),
                             optional=attribute_definition.get(ATTRIBUTE_DEFAULT, False),
-                            default=attribute_definition.get(ATTRIBUTE_DEFAULT, None)
+                            default=attribute_definition.get(ATTRIBUTE_DEFAULT, None),
+                            include_in_start=attribute_definition.get(ATTRIBUTE_INCLUDE_IN_START, True)
                         )
                         for attribute_name, attribute_definition in component_type_definition.get(
                             PARAMETER_ATTRIBUTES, {}).items()

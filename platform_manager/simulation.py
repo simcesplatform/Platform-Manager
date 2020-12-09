@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional
 import yaml
 import yaml.parser
 
-from tools.datetime_tools import get_utcnow_in_milliseconds
+from tools.datetime_tools import get_utcnow_in_milliseconds, to_iso_format_datetime_string
 from tools.tools import FullLogger
 
 LOGGER = FullLogger(__name__)
@@ -38,37 +38,13 @@ MESSAGE_BUFFER_MAX_INTERVAL = "MessageBufferMaxInterval"
 DUPLICATION_COUNT = "duplication_count"
 
 
-@dataclasses.dataclass
-class SimulationGeneralConfiguration:
-    """
-    Data class for holding the general parameters, simulation name, epoch length, etc., for a simulation run.
-    - simulation_id: the id for the simulation run
-    - initial_start_time: the start time for the first epoch in ISO 8601 format
-    - epoch_length: the length of each epoch in seconds
-    - max_epoch_count: the maximum number of epochs within the simulation run
-    - simulation_name: the name of the simulation
-    - description: a descripton for the simulation
-    - manager_name: the name of the simulation manager within the simulation run
-    - epoch_timer_interval: the time interval in seconds until simulation manager resends an Epoch message
-                            if some component has not responded with a Status message
-    - max_epoch_resend_count: the maximum number of Epoch message resends simulation manager can try before giving up
-    - message_bugger_max_document_count: maximum number of messages kept in a buffer in the log writer
-    - message_buffer_max_interval: maximum number of seconds until message buffer is cleared in the log writer
-    """
-    simulation_id: str
-    initial_start_time: str
-    epoch_length: int
-    max_epoch_count: int
-
-    simulation_name: str = "simulation"
-    description: str = ""
-
-    manager_name: Optional[str] = None
-    epoch_timer_interval: Optional[float] = None
-    max_epoch_resend_count: Optional[int] = None
-
-    message_bugger_max_document_count: Optional[int] = None
-    message_buffer_max_interval: Optional[float] = None
+def remove_nones(dictionary: dict) -> dict:
+    """remove_nones"""
+    return {
+        dictionary_key: key_value
+        for dictionary_key, key_value in dictionary.items()
+        if key_value is not None
+    }
 
 
 @dataclasses.dataclass
@@ -93,6 +69,23 @@ class SimulationComponentTypeConfiguration:
 
 
 @dataclasses.dataclass
+class SimulationGeneralConfiguration:
+    """
+    Data class for holding the general parameters, simulation name, epoch length, etc., for a simulation run.
+    - simulation_id: the id for the simulation run
+    - manager_configuration: the parameter configuration for the simulation manager
+    - logwriter_configuration: the parameter configuration for the log writer
+    - simulation_name: the name of the simulation
+    - description: a descripton for the simulation
+    """
+    simulation_id: str
+    manager_configuration: SimulationComponentConfiguration
+    logwriter_configuration: SimulationComponentConfiguration
+    simulation_name: str = "simulation"
+    description: str = ""
+
+
+@dataclasses.dataclass
 class SimulationConfiguration:
     """
     Data class for holding the configuration for a single simulation run.
@@ -112,22 +105,6 @@ def load_simulation_parameters_from_yaml(yaml_filename: str) -> Optional[Simulat
         with open(yaml_filename, mode="r", encoding="UTF-8") as yaml_file:
             yaml_configuration = yaml.safe_load(yaml_file)
 
-        # load the general configuration parameters for the simulation run
-        simulation_general_configuration = yaml_configuration.get(SIMULATION, {})
-        general_configuration = SimulationGeneralConfiguration(
-            simulation_id=get_utcnow_in_milliseconds(),
-            initial_start_time=simulation_general_configuration[SIMULATION_START_TIME],
-            epoch_length=simulation_general_configuration[SIMULATION_EPOCH_LENGTH],
-            max_epoch_count=simulation_general_configuration[SIMULATION_MAX_EPOCH_COUNT],
-            simulation_name=simulation_general_configuration.get(SIMULATION_NAME, "simulation"),
-            description=simulation_general_configuration.get(SIMULATION_DESCRIPTION, ""),
-            manager_name=simulation_general_configuration.get(SIMULATION_MANAGER_NAME, None),
-            epoch_timer_interval=simulation_general_configuration.get(SIMULATION_EPOCH_TIMER_INTERVAL, None),
-            max_epoch_resend_count=simulation_general_configuration.get(SIMULATION_MAX_EPOCH_RESEND_COUNT, None),
-            message_bugger_max_document_count=simulation_general_configuration.get(MESSAGE_BUFFER_MAX_DOCUMENTS, None),
-            message_buffer_max_interval=simulation_general_configuration.get(MESSAGE_BUFFER_MAX_INTERVAL, None)
-        )
-
         # load the component specific parameters for the simulation run
         component_configurations = {
             component_type: SimulationComponentTypeConfiguration(
@@ -145,6 +122,43 @@ def load_simulation_parameters_from_yaml(yaml_filename: str) -> Optional[Simulat
             )
             for component_type, component_type_processes in yaml_configuration.get(COMPONENTS, {}).items()
         }
+
+        # load the simulation manager parameters for the simulation run
+        simulation_configuration = yaml_configuration.get(SIMULATION, {})
+
+        manager_attributes = {
+            "InitialStartTime": to_iso_format_datetime_string(
+                simulation_configuration.get(SIMULATION_START_TIME, None)),
+            "EpochLength": simulation_configuration.get(SIMULATION_EPOCH_LENGTH, None),
+            "MaxEpochCount": simulation_configuration.get(SIMULATION_MAX_EPOCH_COUNT, None),
+            "ManagerName": simulation_configuration.get(SIMULATION_MANAGER_NAME, None),
+            "EpochTimerInterval": simulation_configuration.get(SIMULATION_EPOCH_TIMER_INTERVAL, None),
+            "MaxEpochResendCount": simulation_configuration.get(SIMULATION_MAX_EPOCH_RESEND_COUNT, None),
+            "SimulationName": simulation_configuration.get(SIMULATION_NAME, None),
+            "SimulationDescription": simulation_configuration.get(SIMULATION_DESCRIPTION, None),
+            "Components": [
+                component_name
+                for _, processes in component_configurations.items()
+                for component_name in processes.processes
+            ]
+        }
+
+        # load the log writer parameters for the simulation run
+        log_writer_attributes = {
+            "MessageBufferMaxDocumentCount": simulation_configuration.get(MESSAGE_BUFFER_MAX_DOCUMENTS, None),
+            "MessageBufferMaxInterval": simulation_configuration.get(MESSAGE_BUFFER_MAX_INTERVAL, None)
+        }
+
+        # collect all the general simulation parameters
+        general_configuration = SimulationGeneralConfiguration(
+            simulation_id=get_utcnow_in_milliseconds(),
+            manager_configuration=SimulationComponentConfiguration(attributes=remove_nones(manager_attributes)),
+            logwriter_configuration=SimulationComponentConfiguration(attributes=remove_nones(log_writer_attributes))
+        )
+        if SIMULATION_NAME in simulation_configuration:
+            general_configuration.simulation_name = simulation_configuration[SIMULATION_NAME]
+        if SIMULATION_DESCRIPTION in simulation_configuration:
+            general_configuration.description = simulation_configuration[SIMULATION_DESCRIPTION]
 
         return SimulationConfiguration(
             simulation=general_configuration,

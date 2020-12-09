@@ -21,6 +21,11 @@
                 "Environment": "SIMULATION_MAX_EPOCHS",
                 "Optional": false
             },
+            "Components":
+            {
+                "Environment": "SIMULATION_COMPONENTS",
+                "Optional": false
+            },
             "ManagerName":
             {
                 "Environment": "SIMULATION_MANAGER_NAME",
@@ -31,7 +36,7 @@
             {
                 "Environment": "SIMULATION_EPOCH_TIMER_INTERVAL",
                 "Optional": true,
-                "Default": 30.0
+                "Default": 120.0
             },
             "MaxEpochResendCount":
             {
@@ -39,9 +44,19 @@
                 "Optional": true,
                 "Default": 5
             },
-            "Components":
+            "SimulationName":
             {
-                "Environment": "SIMULATION_COMPONENTS"
+                "Environment": "SIMULATION_NAME",
+                "Optional": true,
+                "Default": "simulation",
+                "IncludeInStart": false
+            },
+            "SimulationDescription":
+            {
+                "Environment": "SIMULATION_DESCRIPTION",
+                "Optional": true,
+                "Default": "",
+                "IncludeInStart": false
             }
         }
     },
