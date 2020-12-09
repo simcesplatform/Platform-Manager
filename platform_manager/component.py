@@ -7,7 +7,7 @@ This module contains data classes for storing information about the components t
 from __future__ import annotations
 import dataclasses
 import json
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 from tools.tools import FullLogger
 
@@ -105,43 +105,52 @@ class ComponentCollectionParameters:
         self.component_types = {**self.component_types, **other_parameter_colletion.component_types}
 
 
+def get_component_type_parameters(component_type_definition: Dict[str, Any]) -> Optional[ComponentParameters]:
+    """get_component_type_parameters"""
+    deployment_type = component_type_definition.get(PARAMETER_COMPONENT_TYPE, None)
+    if deployment_type is None or deployment_type not in ALLOWED_COMPONENT_TYPES:
+        LOGGER.warning("Component type has an unsupported deployment type: {}".format(deployment_type))
+        return None
+
+    docker_image = component_type_definition.get(PARAMETER_DOCKER_IMAGE, None)
+    if docker_image is not None:
+        docker_image = ImageName(*docker_image.split(":"))
+
+    return ComponentParameters(
+        component_type=deployment_type,
+        description=component_type_definition.get(PARAMETER_DESCRIPTION, ""),
+        docker_image=docker_image,
+        attributes={
+            attribute_name: ComponentAttribute(
+                environment=attribute_definition.get(ATTRIBUTE_ENVIRONMENT, None),
+                optional=attribute_definition.get(ATTRIBUTE_DEFAULT, False),
+                default=attribute_definition.get(ATTRIBUTE_DEFAULT, None),
+                include_in_start=attribute_definition.get(ATTRIBUTE_INCLUDE_IN_START, True)
+            )
+            for attribute_name, attribute_definition in component_type_definition.get(
+                PARAMETER_ATTRIBUTES, {}).items()
+        },
+        include_rabbitmq_parameters=deployment_type != STATIC_COMPONENT_TYPE,
+        include_general_parameters=deployment_type != STATIC_COMPONENT_TYPE
+    )
+
+
 def load_component_parameters_from_json(json_filename: str) -> ComponentCollectionParameters:
     """Loads and returns the component type specification from a JSON file."""
     component_types = {}
     try:
         with open(json_filename, mode="r", encoding="UTF-8") as component_file:
             component_type_definitions = json.load(component_file)
+
             for component_type, component_type_definition in component_type_definitions.items():
-                deployment_type = component_type_definition.get(PARAMETER_COMPONENT_TYPE, None)
-                if deployment_type not in ALLOWED_COMPONENT_TYPES:
-                    LOGGER.warning("Component type '{}' has an unsupported deployment type: {}".format(
-                        component_type, deployment_type
-                    ))
+                component_type_parameters = get_component_type_parameters(component_type_definition)
+                if component_type_parameters is None:
+                    LOGGER.error("Could not create component type parameters for '{}'".format(component_type))
                     continue
 
-                # TODO: add some validation checks for the other parameters in the JSON file
-
-                docker_image = component_type_definition.get(PARAMETER_DOCKER_IMAGE, None)
-                if docker_image is not None:
-                    docker_image = ImageName(*docker_image.split(":"))
-                component_types[component_type] = ComponentParameters(
-                    component_type=deployment_type,
-                    description=component_type_definition.get(PARAMETER_DESCRIPTION, ""),
-                    docker_image=docker_image,
-                    attributes={
-                        attribute_name: ComponentAttribute(
-                            environment=attribute_definition.get(ATTRIBUTE_ENVIRONMENT, None),
-                            optional=attribute_definition.get(ATTRIBUTE_DEFAULT, False),
-                            default=attribute_definition.get(ATTRIBUTE_DEFAULT, None),
-                            include_in_start=attribute_definition.get(ATTRIBUTE_INCLUDE_IN_START, True)
-                        )
-                        for attribute_name, attribute_definition in component_type_definition.get(
-                            PARAMETER_ATTRIBUTES, {}).items()
-                    },
-                    include_rabbitmq_parameters=deployment_type != STATIC_COMPONENT_TYPE,
-                    include_mongodb_parameters=component_type == COMPONENT_TYPE_LOG_WRITER,
-                    include_general_parameters=deployment_type != STATIC_COMPONENT_TYPE
-                )
+                if component_type == COMPONENT_TYPE_LOG_WRITER:
+                    component_type_parameters.include_mongodb_parameters = True
+                component_types[component_type] = component_type_parameters
 
         LOGGER.debug("Loaded definitions for {} component types from {}".format(len(component_types), json_filename))
 

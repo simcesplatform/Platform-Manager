@@ -7,10 +7,11 @@
 import logging
 from typing import Any, cast, Dict, List, Optional
 
-from platform_manager.component import CORE_COMPONENT_TYPE, ComponentParameters, STATIC_COMPONENT_TYPE, \
-                                       ComponentCollectionParameters, load_component_parameters_from_json
+from platform_manager.component import CORE_COMPONENT_TYPE, STATIC_COMPONENT_TYPE, ComponentParameters, \
+                                       ComponentCollectionParameters, get_component_type_parameters, \
+                                       load_component_parameters_from_json, \
+                                       COMPONENT_TYPE_SIMULATION_MANAGER, COMPONENT_TYPE_LOG_WRITER
 from platform_manager.docker_runner import ContainerConfiguration
-from platform_manager.platform_manager import COMPONENT_TYPE_LOG_WRITER, COMPONENT_TYPE_SIMULATION_MANAGER
 from platform_manager.simulation import SimulationConfiguration, SimulationComponentConfiguration, \
                                         SIMULATION_MANAGER_NAME
 from tools.clients import default_env_variable_definitions as default_rabbitmq_definitions
@@ -387,3 +388,17 @@ class PlatformEnvironment:
                     )
 
         return start_message
+
+    def register_component_type(self, component_type: str, component_type_definition: Dict[str, Any]) -> bool:
+        """Registers a new (or updates a registered) component type to the platform environment."""
+        if component_type in (COMPONENT_TYPE_SIMULATION_MANAGER, COMPONENT_TYPE_LOG_WRITER):
+            LOGGER.warning("Changing component type '{}' is not allowed.".format(component_type))
+            return False
+
+        component_type_parameters = get_component_type_parameters(component_type_definition)
+        if component_type_parameters is None:
+            LOGGER.warning("Could not register component type: {}".format(component_type))
+            return False
+
+        self.__supported_component_types.add_type(component_type, component_type_parameters)
+        return True
