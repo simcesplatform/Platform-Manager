@@ -1,0 +1,48 @@
+{
+    "StaticTimeSeriesResource":
+    {
+        "Type": "dynamic",
+        "Description": "Static Time Series Resource component",
+        "DockerImage": "static-time-series-resource:0.1",
+        "Attributes":
+        {
+            "ResourceType":
+            {
+                "Environment": "RESOURCE_TYPE",
+                "Optional": false
+            },
+            "ResourceStateFile":
+            {
+                "Environment": "RESOURCE_STATE_CSV_FILE",
+                "Optional": false
+            }
+        }
+    },
+    "Grid":
+    {
+        "Type": "static",
+        "Description": "Statically deployed Grid component",
+        "Attributes":
+        {
+            "ModelName":
+            {
+                "Optional": false
+            },
+            "Symmetrical":
+            {
+                "Optional": true,
+                "Default": false
+            },
+            "MaxControlCount":
+            {
+                "Optional": true,
+                "Default": 15
+            },
+            "ModelVoltageBand":
+            {
+                "Optional": true,
+                "Default": 0.15
+            }
+        }
+    }
+}

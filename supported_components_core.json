@@ -1,0 +1,129 @@
+{
+    "SimulationManager":
+    {
+        "Type": "core",
+        "Description": "Simulation Manager",
+        "DockerImage": "simulation_manager:0.4",
+        "Attributes":
+        {
+            "InitialStartTime":
+            {
+                "Environment": "SIMULATION_INITIAL_START_TIME",
+                "Optional": false
+            },
+            "EpochLength":
+            {
+                "Environment": "SIMULATION_EPOCH_LENGTH",
+                "Optional": false
+            },
+            "MaxEpochCount":
+            {
+                "Environment": "SIMULATION_MAX_EPOCHS",
+                "Optional": false
+            },
+            "Components":
+            {
+                "Environment": "SIMULATION_COMPONENTS",
+                "Optional": false
+            },
+            "ManagerName":
+            {
+                "Environment": "SIMULATION_MANAGER_NAME",
+                "Optional": true,
+                "Default": "simulation_manager"
+            },
+            "EpochTimerInterval":
+            {
+                "Environment": "SIMULATION_EPOCH_TIMER_INTERVAL",
+                "Optional": true,
+                "Default": 120.0
+            },
+            "MaxEpochResendCount":
+            {
+                "Environment": "SIMULATION_MAX_EPOCH_RESENDS",
+                "Optional": true,
+                "Default": 5
+            },
+            "SimulationName":
+            {
+                "Environment": "SIMULATION_NAME",
+                "Optional": true,
+                "Default": "simulation",
+                "IncludeInStart": false
+            },
+            "SimulationDescription":
+            {
+                "Environment": "SIMULATION_DESCRIPTION",
+                "Optional": true,
+                "Default": "",
+                "IncludeInStart": false
+            }
+        }
+    },
+    "LogWriter":
+    {
+        "Type": "core",
+        "Description": "Log Writer",
+        "DockerImage": "log_writer:0.2",
+        "Attributes":
+        {
+            "MessageBufferMaxDocumentCount":
+            {
+                "Environment": "MESSAGE_BUFFER_MAX_DOCUMENTS",
+                "Optional": true,
+                "Default": 10
+            },
+            "MessageBufferMaxInterval":
+            {
+                "Environment": "MESSAGE_BUFFER_MAX_INTERVAL",
+                "Optional": true,
+                "Default": 5.0
+            }
+        }
+    },
+    "Dummy":
+    {
+        "Type": "dynamic",
+        "Description": "Dummy component",
+        "DockerImage": "dummy:0.4",
+        "Attributes":
+        {
+            "MinSleepTime":
+            {
+                "Environment": "MIN_SLEEP_TIME",
+                "Optional": true,
+                "Default": 1.0
+            },
+            "MaxSleepTime":
+            {
+                "Environment": "MAX_SLEEP_TIME",
+                "Optional": true,
+                "Default": 5.0
+            },
+            "SendMissChance":
+            {
+                "Environment": "SEND_MISS_CHANCE",
+                "Optional": true,
+                "Default": 0.0
+            },
+            "ReceiveMissChance":
+            {
+                "Environment": "RECEIVE_MISS_CHANCE",
+                "Optional": true,
+                "Default": 0.0
+            },
+            "WarningChance":
+            {
+                "Environment": "WARNING_CHANCE",
+                "Optional": true,
+                "Default": 0.0
+            },
+            "ErrorChance":
+            {
+                "Environment": "ERROR_CHANCE",
+                "Optional": true,
+                "Default": 0.0
+            }
+        }
+    }
+}

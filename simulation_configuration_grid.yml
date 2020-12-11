@@ -1,48 +1,43 @@
-simulation:
-    name: "Energy community with Grid demo"
-    description: "This scenario describes the behavior of a small rural energy community of four detached houses. The houses have no controllable loads or storages but two of them have a small scale PV systems installed and one has a electric vehicle charging. Scenario spans over one day with hourly resolution (epochs). This scenario includes a grid simulation with OpenDSS."
-    start_time: "2020-06-25T00:00:00.000+03:00"
-    epoch_length: 3600
-    max_epochs: 24
+Simulation:
+    Name: "Energy community with Grid demo"
+    Description: "This scenario describes the behavior of a small rural energy community of four detached houses. The houses have no controllable loads or storages but two of them have a small scale PV systems installed and one has a electric vehicle charging. Scenario spans over one day with hourly resolution (epochs). This scenario includes a grid simulation with OpenDSS."
+    InitialStartTime: "2020-06-25T00:00:00.000+03:00"
+    EpochLength: 3600
+    MaxEpochCount: 24
 
-components:  # these are the names of the component implementations
-    # the component implementations that are currently supported:
-    # - static components: Grid
-    # - dynamic components: StaticTimeSeriesResource, Dummy
-
+Components:  # these are the names of the component implementations
     # duplication_count is reserved keyword and cannot be used as a parameter for a component instance
 
     Grid:
         Grid:                      # The name of the Grid instance in the simulation run
             ModelName: EC_Network  # The grid model name that will be sent as a part of the Start message
             Symmetrical: false
-            MaxControlCount: 15
 
     Dummy:
         dummy:
             duplication_count: 2  # Create 2 components, named dummy_1 and dummy_2, with otherwise identical parameters
-            MIN_SLEEP_TIME: 1     # MIN_SLEEP_TIME Environment variable for the dynamic component
-            MAX_SLEEP_TIME: 5
+            MinSleepTime: 1
+            MaxSleepTime: 5
 
     StaticTimeSeriesResource:
         load1:                   # The name of this StaticTimeSeriesResource instance in the simulation run
-            RESOURCE_TYPE: Load   # RESOURCE_TYPE environment variable for the dynamic component
-            RESOURCE_STATE_CSV_FILE: /resources/Load1.csv
+            ResourceType: Load   # RESOURCE_TYPE environment variable for the dynamic component
+            ResourceStateFile: /resources/Load1.csv
         load2:
-            RESOURCE_TYPE: Load
-            RESOURCE_STATE_CSV_FILE: /resources/Load2.csv
+            ResourceType: Load
+            ResourceStateFile: /resources/Load2.csv
         load3:
-            RESOURCE_TYPE: Load
-            RESOURCE_STATE_CSV_FILE: /resources/Load3.csv
+            ResourceType: Load
+            ResourceStateFile: /resources/Load3.csv
         load4:
-            RESOURCE_TYPE: Load
-            RESOURCE_STATE_CSV_FILE: /resources/Load4.csv
+            ResourceType: Load
+            ResourceStateFile: /resources/Load4.csv
         ev:
-            RESOURCE_TYPE: Load
-            RESOURCE_STATE_CSV_FILE: /resources/EV.csv
+            ResourceType: Load
+            ResourceStateFile: /resources/EV.csv
         pv_small:
-            RESOURCE_TYPE: Generator
-            RESOURCE_STATE_CSV_FILE: /resources/PV_small.csv
+            ResourceType: Generator
+            ResourceStateFile: /resources/PV_small.csv
         pv_large:
-            RESOURCE_TYPE: Generator
-            RESOURCE_STATE_CSV_FILE: /resources/PV_large.csv
+            ResourceType: Generator
+            ResourceStateFile: /resources/PV_large.csv
