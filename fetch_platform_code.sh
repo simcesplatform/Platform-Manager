@@ -1,5 +1,12 @@
 #!/bin/bash
 
+current_folder=$(pwd)
+read -p "Do you want clone the core component repositories to the folder $current_folder? " answer
+if [[ -z "$answer" ]] || [[ "$answer" != "y" ]]
+then
+    return 0 2> /dev/null || exit 0
+fi
+
 # Clones the core component repositories from the GitLab server
 echo "Cloning the repositories"
 git -c http.sslVerify=false clone --recursive https://git.ain.rd.tut.fi/procemplus/simulation-manager.git
@@ -8,7 +15,7 @@ git -c http.sslVerify=false clone https://git.ain.rd.tut.fi/procemplus/logreader
 git -c http.sslVerify=false clone --recursive https://git.ain.rd.tut.fi/procemplus/platform-manager.git
 
 # Simple checks to see if the repositories have been cloned properly
-echo ""
+echo
 if [ "$(ls -A simulation-manager/simulation-tools)" ]
 then
     echo "OK: simulation-manager repository seems ok."
