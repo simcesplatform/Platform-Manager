@@ -3,7 +3,7 @@
     {
         "Type": "core",
         "Description": "Simulation Manager",
-        "DockerImage": "simulation_manager:0.4",
+        "DockerImage": "simulation_manager:0.5",
         "Attributes":
         {
             "InitialStartTime":
@@ -64,7 +64,7 @@
     {
         "Type": "core",
         "Description": "Log Writer",
-        "DockerImage": "log_writer:0.2",
+        "DockerImage": "log_writer:0.5",
         "Attributes":
         {
             "MessageBufferMaxDocumentCount":
@@ -85,7 +85,7 @@
     {
         "Type": "dynamic",
         "Description": "Dummy component",
-        "DockerImage": "dummy:0.4",
+        "DockerImage": "dummy:0.5",
         "Attributes":
         {
             "MinSleepTime":

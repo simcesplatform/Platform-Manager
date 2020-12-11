@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Builds the core components and starts the background containers for the Simulation platform.
+
 echo "Creating Docker volumes for the simulation platform."
 docker volume create mongodb_data
 docker volume create simulation_configuration
@@ -13,11 +15,8 @@ docker network create mongodb_network
 docker network create rabbitmq_network
 
 echo ""
-echo "Building the required Docker images for the simulation platform."
-docker-compose -f build/docker-compose-build-images.yml build
-
-echo ""
-source copy_folder_to_volume.sh resources simulation_resources /resources
+echo "Building the core Docker images for the simulation platform."
+docker-compose -f build/core/docker-compose-build-core.yml build
 
 echo ""
 echo "Starting the background Docker containers."

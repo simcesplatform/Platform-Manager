@@ -3,7 +3,7 @@
     {
         "Type": "dynamic",
         "Description": "Static Time Series Resource component",
-        "DockerImage": "static-time-series-resource:0.1",
+        "DockerImage": "static-time-series-resource:0.5",
         "Attributes":
         {
             "ResourceType":
