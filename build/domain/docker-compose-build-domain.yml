@@ -5,5 +5,5 @@ services:
     static-time-series-resource:
         image: static-time-series-resource:0.5
         build:
-            context: ../../static-time-series-resource
+            context: ../../../static-time-series-resource
             dockerfile: Dockerfile

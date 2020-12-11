@@ -5,29 +5,29 @@ services:
     platform_manager:
         image: platform_manager:0.5
         build:
-            context: ..
+            context: ../..
             dockerfile: Dockerfile
 
     log_writer:
         image: log_writer:0.5
         build:
-            context: ../../logwriter
+            context: ../../../logwriter
             dockerfile: Dockerfile-log-writer
 
     log_reader:
         image: log_reader:0.5
         build:
-            context: ../../logreader
+            context: ../../../logreader
             dockerfile: Dockerfile
 
     simulation_manager:
         image: simulation_manager:0.5
         build:
-            context: ../../simulation-manager
+            context: ../../../simulation-manager
             dockerfile: Dockerfile-manager
 
     dummy:
         image: dummy:0.5
         build:
-            context: ../../simulation-manager
+            context: ../../../simulation-manager
             dockerfile: Dockerfile-dummy
