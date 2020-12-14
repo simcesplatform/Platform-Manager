@@ -92,13 +92,13 @@
             {
                 "Environment": "MIN_SLEEP_TIME",
                 "Optional": true,
-                "Default": 1.0
+                "Default": 2.0
             },
             "MaxSleepTime":
             {
                 "Environment": "MAX_SLEEP_TIME",
                 "Optional": true,
-                "Default": 5.0
+                "Default": 15.0
             },
             "SendMissChance":
             {

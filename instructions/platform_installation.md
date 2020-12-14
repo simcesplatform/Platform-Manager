@@ -22,7 +22,7 @@ Some simulation components might have other requirements. For those, see the com
 ## Installing the core components
 
 1. Create a folder for the core components. Each core component will have its own subfolder under this folder. In these instructions this main folder is named `platform`.
-    - Note, that to avoid repeatedly typing the username and the password for the GitLab server when fetching the source code in steps 2-5, you can use command
+    - Note, that to avoid repeatedly typing the username and the password for the GitLab server when fetching the source code, you can use command
 
         ```bash
         git config --global credential.helper store
@@ -33,7 +33,7 @@ Some simulation components might have other requirements. For those, see the com
     1. There are 4 repositories that are needed for the core components: simulation-manager, logwriter, logreader and platform-manager. The platform-manager repository contains a script that can be used to fetch all 4 repositories with a single command: [fetch_platform_code.sh](https://git.ain.rd.tut.fi/procemplus/platform-manager/-/blob/master/fetch_platform_code.sh).
 
         If you do not want to use the script and instead want to fetch each of the repositories individually, move to the step 2.6.
-    2. Copy the fetch_platform_code.sh script file to the `platform` folder for example by downloading it from the GitLab using the browser interface.
+    2. Copy the `fetch_platform_code.sh` script file to the `platform` folder for example by downloading it from the GitLab using the browser interface.
     3. Using Git Bash (in Windows) or other terminal that supports Bash navigate to the `platform` folder.
         - In the terminal you can navigate inside a folder using command: `cd <folder_name>`
         - To navigate to the parent folder, use command: `cd ..`

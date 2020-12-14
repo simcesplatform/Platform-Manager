@@ -6,7 +6,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
-        image: platform_manager:0.1
+        image: platform_manager:0.5
         container_name: platform-manager
         restart: "no"
         env_file:

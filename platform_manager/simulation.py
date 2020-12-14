@@ -116,14 +116,23 @@ def load_simulation_parameters_from_yaml(yaml_filename: str) -> Optional[Simulat
             component_type: SimulationComponentTypeConfiguration(
                 processes={
                     component_name: SimulationComponentConfiguration(
-                        duplication_count=component_attributes.get(DUPLICATION_COUNT, 1),
+                        duplication_count=(
+                            1 if component_attributes is None
+                            else component_attributes.get(DUPLICATION_COUNT, 1)
+                        ),
                         attributes={
                             attribute_name: attribute_value
-                            for attribute_name, attribute_value in component_attributes.items()
+                            for attribute_name, attribute_value in (
+                                {}.items() if component_attributes is None
+                                else component_attributes.items()
+                            )
                             if attribute_name != DUPLICATION_COUNT
                         }
                     )
-                    for component_name, component_attributes in component_type_processes.items()
+                    for component_name, component_attributes in (
+                        {}.items() if component_type_processes is None
+                        else component_type_processes.items()
+                    )
                 }
             )
             for component_type, component_type_processes in yaml_configuration.get(COMPONENTS, {}).items()
