@@ -71,13 +71,13 @@
             {
                 "Environment": "MESSAGE_BUFFER_MAX_DOCUMENTS",
                 "Optional": true,
-                "Default": 10
+                "Default": 20
             },
             "MessageBufferMaxInterval":
             {
                 "Environment": "MESSAGE_BUFFER_MAX_INTERVAL",
                 "Optional": true,
-                "Default": 5.0
+                "Default": 10.0
             }
         }
     },
