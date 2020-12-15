@@ -14,22 +14,16 @@ Simulation:
     MessageBufferMaxDocumentCount: 10
     MessageBufferMaxInterval: 5.0
 
-Components:  # these are the names of the component implementations
-    # the component implementations that are currently supported:
-    # - static components: Grid
-    # - dynamic components: StaticTimeSeriesResource, Dummy
-
-    # duplication_count is reserved keyword and cannot be used as a parameter for a component instance
-
+Components:
     Dummy:
+        # Include one dummy component to slow down the simulation
         dummy:
-            duplication_count: 2  # Create 2 components, named dummy_1 and dummy_2, with otherwise identical parameters
-            MinSleepTime: 1.5     # the attributes used in the Start message, corresponds to the
-            MaxSleepTime: 3.0     # MIN_SLEEP_TIME and MAX_SLEEP_TIME environment variables for the Dummy component
+            MinSleepTime: 2.5
+            MaxSleepTime: 5.0
 
     StaticTimeSeriesResource:
-        load_1:                  # The name of this StaticTimeSeriesResource instance in the simulation run
-            ResourceType: Load   # RESOURCE_TYPE environment variable for the dynamic component
+        load_1:
+            ResourceType: Load
             ResourceStateFile: /resources/Load1.csv
         load_2:
             ResourceType: Load

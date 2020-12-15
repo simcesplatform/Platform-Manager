@@ -6,7 +6,15 @@
     - [Setting up the simulation configuration file](#setting-up-the-simulation-configuration-file)
     - [Starting the first simulation run](#starting-the-first-simulation-run)
 - [Running EC scenario demo simulation](#running-ec-scenario-demo-simulation)
+    - [Installing the domain component](#installing-the-domain-component)
+    - [Starting the simulation run](#starting-the-simulation-run)
 - [Running a new simulation](#running-a-new-simulation)
+    - [Installing a new domain component](#installing-a-new-domain-component)
+    - [Adding a new component type to the domain build script](#adding-a-new-component-type-to-the-domain-build-script)
+    - [Registering new component type to the Platform manager](#registering-new-component-type-to-the-platform-manager)
+    - [Building all the components](#building-all-the-components)
+    - [Specifying the simulation configuration file](#specifying-the-simulation-configuration-file)
+    - [Starting a new simulation run](#starting-a-new-simulation-run)
 - [Following a running simulation](#following-a-running-simulation)
 - [Stopping a running simulation](#stopping-a-running-simulation)
 
@@ -52,7 +60,7 @@ For the first test simulation, the configuration file can be left as it is.
 
 ### Starting the first simulation run
 
-To start the first test simulation, using Bash compatible terminal (Git Bash in Windows) navigate to the `platform-manager` folder and use the command
+To start the first test simulation, use Bash compatible terminal (Git Bash in Windows) to navigate to the `platform-manager` folder and use the command
 
 ```bash
 source start_simulation.sh simulation_configuration_test.yml
@@ -78,14 +86,91 @@ The Log Reader, be default at [http://localhost:8080](http://localhost:8080) can
 - `http://localhost:8080/simulations/<simulation_id>/messages` should show all the messages for the test simulation in the order of their arrival
 - `http://localhost:8080/simulations/<simulation_id>/messages?topic=Start` should show only the start message for the test simulation
 
-In the above, replace `<simulation_id>` with the id given by the Platform manager. In the earlier output, the simulation id would be `2020-12-14T16:26:46.390Z`. See the Log Reader API documentation page for more details.
+In the above, replace `<simulation_id>` with the id given by the Platform manager. In the earlier output, the simulation id would be `2020-12-14T16:26:46.390Z`. See the Log Reader API documentation page for more details about the using the API.
 
 ## Running EC scenario demo simulation
 
+After successfully running the test simulation, the next step is to run a simulation with at least one domain component. The Energy Community (EC) demo scenario uses the dynamically deployed StaticTimeSeriesResource components along with the core components. The scenario is defined at the wiki page [Energy Community (EC)](https://wiki.eduuni.fi/pages/viewpage.action?pageId=171974859).
+
+### Installing the domain component
+
+To be able to use the StaticTimeSeriesResource component in a simulation run, it must first be installed. Use the following steps to make it available for the Platform Manager to use.
+
+1. Using Bash compatible terminal (Git Bash in Windows) navigate to the `platform` folder (the folder under which the Platform Manager and all the other core components are installed).
+2. Clone the StaticTimeSeriesResource repository using the command
+
+    ```bash
+    git -c http.sslVerify=false clone --recursive https://git.ain.rd.tut.fi/procemplus/static-time-series-resource.git
+    ```
+
+3. A link to the Dockerfile for StaticTimeSeriesResource has already been included in the file `platform-manager/build/domain/docker-compose-build-domain.yml` and all the CSV files required for the EC demo scenario have been added to the folder `platform-manager/resources`. The static time series resource component type has also already been registered to the Platform Manager using file `platform-manager/supported_components_domain.json`. Thus the Docker image for the new domain component can be built using the ready-made script by using the command
+
+    ```bash
+    source platform_domain_setup.sh
+    ```
+
+    This script will run the docker-compose build command for the mentioned docker-compose file and make all the files in the resources folder available for the Platform Manager.
+
+4. Check the simulation configuration file for the EC demo scenario. The ready-made configuration file can be found at [platform-manager/simulation_configuration_ec.yml](platform-manager/simulation_configuration_ec.yml). Note that the filenames for the CSV files that the static time series resource component uses are given as `/resources/<filename>` where the `<filename>` is the corresponding filename at the folder `/platform-manager/resources/`.
+
+### Starting the simulation run
+
+To start the EC demo scenario simulation, use Bash compatible terminal to navigate to the `platform-manager` folder and use the command
+
+```bash
+source start_simulation.sh simulation_configuration_ec.yml
+```
+
+After the simulation run has been completed you should be able to use the Log Reader to look through the messages used in the simulation. An example of creating a time series for the real powers for the generators in CSV format and the expected response is given below. `<simulation_id>` should be replaced by the simulation id given by the Platform Manager.
+
+- Request:
+
+    ```text
+    http://localhost:8080/simulations/<simulation_id>/timeseries?attrs=RealPower&topic=ResourceState.Generator.%23&startEpoch=5&endEpoch=8&format=csv
+    ```
+
+- Response:
+
+    ```csv
+    epoch;timestamp;ResourceState.Generator.pv_large:pv_large.RealPower;ResourceState.Generator.pv_small:pv_small.RealPower
+    5;2020-06-25T01:00:00Z;0.35;0.14
+    6;2020-06-25T02:00:00Z;0.84;0.34
+    7;2020-06-25T03:00:00Z;1.4;0.57
+    8;2020-06-25T04:00:00Z;1.89;0.76
+    ```
+
 ## Running a new simulation
 
-The simulation component types that Platform Manager supports are defined in the files `supported_component_core.json` and `supported_component_domain.json`. The core components that are used in the first test simulation have been predefined and this these files do not need any modification for the first simulation run.
+...
+
+### Installing a new domain component
+
+...
+
+### Adding a new component type to the domain build script
+
+...
+
+### Registering new component type to the Platform manager
+
+...
+
+### Building all the components
+
+...
+
+### Specifying the simulation configuration file
+
+...
+
+### Starting a new simulation run
+
+...
 
 ## Following a running simulation
 
+...
+
 ## Stopping a running simulation
+
+...
