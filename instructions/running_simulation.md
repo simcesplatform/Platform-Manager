@@ -10,12 +10,14 @@
     - [Starting the simulation run](#starting-the-simulation-run)
 - [Running a new simulation](#running-a-new-simulation)
     - [Installing a new domain component](#installing-a-new-domain-component)
-    - [Adding a new component type to the domain build script](#adding-a-new-component-type-to-the-domain-build-script)
+    - [Building Docker images for domain components](#building-docker-images-for-domain-components)
     - [Registering new component type to the Platform manager](#registering-new-component-type-to-the-platform-manager)
-    - [Building all the components](#building-all-the-components)
     - [Specifying the simulation configuration file](#specifying-the-simulation-configuration-file)
     - [Starting a new simulation run](#starting-a-new-simulation-run)
 - [Following a running simulation](#following-a-running-simulation)
+    - [Using follow simulation script](#using-follow-simulation-script)
+    - [Using docker logs command](#using-docker-logs-command)
+    - [Fetching log files after a simulation run](#fetching-log-files-after-a-simulation-run)
 - [Stopping a running simulation](#stopping-a-running-simulation)
 
 These instructions assume that the core platform has been installed using the instructions given in the page [platform_installation.md](platform_installation.md).
@@ -141,31 +143,81 @@ After the simulation run has been completed you should be able to use the Log Re
 
 ## Running a new simulation
 
-...
+There are a couple steps before a simulation run using user developed components can be be started using the Platform Manager:
+
+- All the components have to be installed.
+    - With statically deployed components this also involves starting the component manually.
+    - With dynamically deployed components this involves building the Docker image for the component. Also any static resource files (for example CSV files) have to be made available for the Platform Manager.
+- All the components have to be registered to the Platform Manager.
+
+After the component installation and registration a new simulation configuration file can be created and then used to start a new simulation run.
 
 ### Installing a new domain component
 
-...
+The source code for each component should have its own code repository at the [GitLab server](https://git.ain.rd.tut.fi/procemplus). The code repository should have instructions on how to fetch all the required source code for the component that should be followed. In general the command to clone the remote code repository and fetch the source code is:
 
-### Adding a new component type to the domain build script
+```bash
+git -c http.sslVerify=false clone --recursive https://git.ain.rd.tut.fi/procemplus/<component_name>.git
+```
 
-...
+but depending on the component there might also be other requirements. `<component_name>` should be replaced by the repository name for the component, for example `static-time-series-resource` for the Static Time Series Resource component.
+
+For statically deployed components the component code repository should also include instructions on how to install and start the component that should be followed.
+
+A dynamically deployed component should include a Dockerfile that can be used to build the Docker image for the container. See the section [Building Docker images for domain components](#building-docker-images-for-domain-components) on how to build the Docker images for the dynamically deployed domain components.
+
+### Building Docker images for domain components
+
+If the component that should be dynamically deployed does not have a ready-made Dockerfile it can be created using the template file [Dockerfile-template](Dockerfile-template) as a starting point. It is based on the Dockerfile for the Static Time Series Resource component. The template file contains comment lines that should help creating a Dockerfile for a new component. The new Dockerfile should be placed at the root folder of the component source code.
+
+The simplest way to build the required Docker images is to add or modify the existing docker-compose build file, `build/domain/docker-compose-build-domain.yml`. By default the file contains the block for the Static Time Series Resource component that is shown below:
+
+```yaml
+static-time-series-resource:
+    image: static-time-series-resource:0.5
+    build:
+        context: ../../../static-time-series-resource
+        dockerfile: Dockerfile
+```
+
+For each dynamically deployed component there should be its own block with a similar format:
+
+```yaml
+<component_name>:
+    image: <component_name>:<version_tag>
+    build:
+        context: <path_to_component_folder>
+        dockerfile: <docker_filename>
+```
+
+- `<component_name>` is the component name, can be the same as the folder name for the repository, for example `static-time-series-resource` for the Static Time Series Resource component
+- `<version_tag>` is the version number for the component. This can be chosen freely but it must be the same as what is given when registering the component to the Platform Manager. By default the Static Time Series Resource component is using version `0.5`.
+- `<path_to_component_folder>` is the path to the component folder where the Dockerfile is found. In the Static Time Series Resource example a relative path is used.
+- `<docker_filename>` is the filename for the Dockerfile in the folder given in the previous setting.
+
+TODO: instructions to comment out unneeded components
+TODO: instructions to build domain images
 
 ### Registering new component type to the Platform manager
 
-...
-
-### Building all the components
-
-...
+TODO: description why the registration is needed
+TODO: show the example domain JSON file
+TODO: describe the minimum requirements for static and for dynamic component
+TODO: describe the connection to the Start message in the defined attributes
+TODO: describe the connection to the environment variables
+TODO: full specification for the JSON objects
+TODO: commands to include updated JSON file for Platform Manager
 
 ### Specifying the simulation configuration file
 
-...
+TODO: show the example configuration file (Grid + EC)
+TODO: explain the example configuration file
+TODO: create a template configuration file
+TODO: full specification for the configuration file
 
 ### Starting a new simulation run
 
-...
+TODO: given the command to start a new simulation run
 
 ## Following a running simulation
 
