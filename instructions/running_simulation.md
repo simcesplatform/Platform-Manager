@@ -179,7 +179,7 @@ The dynamically deployed Docker containers use a name format `Sim<id_number>_<co
 
 ### Using follow simulation script
 
-To start following the running simulation with colored output from all the dynamically deployed components using Bash compatible terminal navigate to the platform-manager repository and use the command:
+To start following the running simulation with colored output from all the dynamically deployed components, using Bash compatible terminal navigate to the platform-manager repository and use the command:
 
 ```bash
 source follow_simulation.sh <id_number>
@@ -218,4 +218,21 @@ The filenames for the log files use the format `logfile_<component_name>.log`. N
 
 ## Stopping a running simulation
 
-...
+To stop a running simulation by closing all the dynamically deployed containers,
+using Bash compatible terminal navigate to the platform-manager repository and use the command:
+
+```bash
+source stop_simulation.sh <id_number>
+```
+
+where `<id_number>` is given by the Platform Manager after the simulation was started.
+
+You can use command
+
+```bash
+docker ps --filter name=Sim --format "{{.Names}}"
+```
+
+to see all the currently running containers started by the Platform Manager.
+
+Note that this will only stop the dynamically deployed components and does not affect the statically deployed components in any way.
