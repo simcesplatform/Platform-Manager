@@ -1,28 +1,37 @@
 Simulation:
     Name: "Energy community with Grid demo"
-    Description: "This scenario describes the behavior of a small rural energy community of four detached houses. The houses have no controllable loads or storages but two of them have a small scale PV systems installed and one has a electric vehicle charging. Scenario spans over one day with hourly resolution (epochs). This scenario includes a grid simulation with OpenDSS."
+    Description: "This scenario describes the behavior of a small rural energy community of four detached houses and it includes a grid simulation with OpenDSS."
     InitialStartTime: "2020-06-25T00:00:00.000+03:00"
     EpochLength: 3600
     MaxEpochCount: 24
 
-Components:  # these are the names of the component implementations
+    # Optional settings for the Simulation Manager
+    ManagerName: "Manager"
+    EpochTimerInterval: 20
+    MaxEpochResendCount: 2
+
+    # Optional settings for the Log Writer
+    MessageBufferMaxDocumentCount: 10
+    MessageBufferMaxInterval: 5.0
+
+Components:  # these are the names of the component implementations (defined in the supported components JSON file)
     # duplication_count is reserved keyword and cannot be used as a parameter for a component instance
 
-    Grid:
+    Grid:                          # The statistically deployed Grid component type
         Grid:                      # The name of the Grid instance in the simulation run
             ModelName: EC_Network  # The grid model name that will be sent as a part of the Start message
             Symmetrical: false
 
-    Dummy:
+    Dummy:                        # The dynamically deployed Dummy component to slow down the simulation
         dummy:
             duplication_count: 2  # Create 2 components, named dummy_1 and dummy_2, with otherwise identical parameters
             MinSleepTime: 1
             MaxSleepTime: 5
 
-    StaticTimeSeriesResource:
+    StaticTimeSeriesResource:    # The dynamically deployed Static Time Series Resource component
         load1:                   # The name of this StaticTimeSeriesResource instance in the simulation run
-            ResourceType: Load   # RESOURCE_TYPE environment variable for the dynamic component
-            ResourceStateFile: /resources/Load1.csv
+            ResourceType: Load                       # corresponds to RESOURCE_TYPE environment variable
+            ResourceStateFile: /resources/Load1.csv  # corresponds to RESOURCE_STATE_FILE environment variable
         load2:
             ResourceType: Load
             ResourceStateFile: /resources/Load2.csv
