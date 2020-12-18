@@ -10,6 +10,7 @@
     - [Starting the simulation run](#starting-the-simulation-run)
 - [Running a new simulation](#running-a-new-simulation)
     - [Installing a new domain component](#installing-a-new-domain-component)
+    - [Making resource files available for the Platform Manager](#making-resource-files-available-for-the-platform-manager)
     - [Building Docker images for domain components](#building-docker-images-for-domain-components)
     - [Registering new component type to the Platform manager](#registering-new-component-type-to-the-platform-manager)
     - [Specifying the simulation configuration file](#specifying-the-simulation-configuration-file)
@@ -280,14 +281,113 @@ source platform_setup_core.sh
 
 ### Specifying the simulation configuration file
 
-TODO: show the example configuration file (Grid + EC)
-TODO: explain the example configuration file
+TODO: description about the simulation configuration file
+
+Example simulation configuration file for a simulation where a Grid component has been added to the EC scenario can be found at [simulation_configuration_grid.yml](simulation_configuration_grid.yml):
+
+```yaml
+Simulation:
+    Name: "Energy community with Grid demo"
+    Description: "This scenario includes a grid simulation with OpenDSS."
+    InitialStartTime: "2020-06-25T00:00:00.000+03:00"
+    EpochLength: 3600
+    MaxEpochCount: 24
+
+    # Optional settings for the Simulation Manager
+    ManagerName: "Manager"
+    EpochTimerInterval: 20
+    MaxEpochResendCount: 2
+
+    # Optional settings for the Log Writer
+    MessageBufferMaxDocumentCount: 10
+    MessageBufferMaxInterval: 5.0
+
+Components:  # these are the names of the component implementations (defined in the supported components JSON file)
+    # duplication_count is reserved keyword and cannot be used as a parameter for a component instance
+
+    Grid:                            # The statistically deployed Grid component type
+        Grid:                        # The name of the Grid instance in the simulation run
+            ModelName: "EC_Network"  # The grid model name that will be sent as a part of the Start message
+            Symmetrical: false
+
+    Dummy:                        # The dynamically deployed Dummy component to slow down the simulation
+        dummy:                    # The base name for the Dummy components
+            duplication_count: 2  # Create 2 components, named dummy_1 and dummy_2, with otherwise identical parameters
+            MinSleepTime: 1
+            MaxSleepTime: 5
+
+    StaticTimeSeriesResource:    # The dynamically deployed Static Time Series Resource component
+        load1:                   # The name of this StaticTimeSeriesResource instance in the simulation run
+            ResourceType: "Load"                       # corresponds to RESOURCE_TYPE environment variable
+            ResourceStateFile: "/resources/Load1.csv"  # corresponds to RESOURCE_STATE_FILE environment variable
+        load2:
+            ResourceType: "Load"
+            ResourceStateFile: "/resources/Load2.csv"
+        load3:
+            ResourceType: "Load"
+            ResourceStateFile: "/resources/Load3.csv"
+        load4:
+            ResourceType: "Load"
+            ResourceStateFile: "/resources/Load4.csv"
+        ev:
+            ResourceType: "Load"
+            ResourceStateFile: "/resources/EV.csv"
+        pv_small:
+            ResourceType: "Generator"
+            ResourceStateFile: "/resources/PV_small.csv"
+        pv_large:
+            ResourceType: "Generator"
+            ResourceStateFile: "/resources/PV_large.csv"
+```
+
+Note that while string values can be in most cases be given without double quotes in YAML files they are consistently used in the above example to avoid any possible edge cases where the strings without quotes might be interpreted as something other than a single string value.
+A breakdown of parameters set in the example configuration using the knowledge of the default values from [Start (message)](https://wiki.eduuni.fi/pages/viewpage.action?pageId=164959964) and the supported component settings from [supported_components_core.json](supported_components_core.json) and [supported_components_domain.json](supported_components_domain.json):
+
+- The required overall parameters
+    - The simulation name is set to `"Energy community with Grid demo"`
+    - The description for the simulation is set to `"This scenario includes a grid simulation with OpenDSS."`
+    - The start time for the first epoch in set to `"2020-06-25T00:00:00.000+03:00"` or to "2020-06-24T21:00:00.000Z" in UTC time
+    - The duration of each epoch is set to `3600` seconds, i.e. 1 hour
+    - Maximum number of epochs is set to `24`, i.e. the simulation will last 24 hours or 1 day
+- The optional overall parameters
+    - The Simulation Manager name in the simulation is set to `"Manager"`, the default name would be `"simulation_manager"`
+    - The time duration until Simulation Manager tries to resend the epoch message is set to `20` seconds, the default duration would be `120` seconds
+    - The maximum number of epoch resends the Simulation Manager is allowed to try before ending the simulation is set to `2` epoch resends, the default would be `5` epoch resends
+    - The maximum number of messages the buffer in Log Writer can have is set to `10` messages, the default would be `20` messages
+    - The maximum time interval until the message buffer in Log Writer is cleared is set to `5` seconds, the default would be `10` seconds
+- The simulation will have 1 Grid component participating that is statically deployed
+    - The name of the Grid component is set to `"Grid"`
+    - The `ModelName` parameter for the Grid is set to `"EC_Network"`
+    - The `Symmetrical` parameter for the Grid is set to the boolean value `false`
+    - The optional parameter `MaxControlCount` for the Grid will be set to the default value `15`
+    - The optional parameter `ModelVoltageBand` for the Grid will be set to the default value `0.15`
+- The simulation will have 2 Dummy components dynamically deployed by Platform Manager
+    - Using the `duplicate_count` attribute there will be `2` Dummy components with identical parameters created. The component names will be in the format `<basename>_<number>`, i.e. `"dummy_1"` and `"dummy_2"` since the base name is set to `"dummy"`
+    - The `MinSleepTime` parameter for the Dummy components are set to `1`
+    - The `MaxSleepTime` parameter for the Dummy components are set to `5`
+    - All the other parameters for the Dummy components, i.e. `WarningChance`, `SendMissChance`, `ReceiveMissChance` and `ErrorChance`, are set to the their default value of `0.0`
+- The simulation will have 7 Static Time Series Resource components that will be dynamically deployed by the Platform Manager
+    - The resource components representing a load are named `"load1"` `"load2"` `"load3"` `"load4"` and `"ev"`
+        - The `ResourceType` parameter is set to `"Load"` in all load components
+        - The `ResourceStateFile` parameter is set to the filename where the resource component will find it after it has been deployed, for example the filename for the `"load1"` component is set to `"/resources/Load1.csv"`
+            - Note, that the filename given here refer to the filenames inside the Docker containers and thus they all include `"/resources"` at the beginning, since that is where they will be found when included according to the instruction in the section [Making resource files available for the Platform Manager](#making-resource-files-available-for-the-platform-manager).
+    - The resource components representing a generator are named `"pv_small"` and `"pv_large"`
+        - The `ResourceType` parameter is set to `"Generator"` in both generator components
+        - The `ResourceStateFile` parameter is set to the filename where the resource component will find it after it has been deployed, for example the filename for the `"pv_small"` component is set to `"/resources/PV_small.csv"`
+
 TODO: create a template configuration file
+
 TODO: full specification for the configuration file
 
 ### Starting a new simulation run
 
-TODO: given the command to start a new simulation run
+To start a new simulation eun, use Bash compatible terminal to navigate to the `platform-manager` folder and use the command
+
+```bash
+source start_simulation.sh <configuration_file>
+```
+
+where `<configuration_file>` is the filename containing YAML configuration for the simulation run.
 
 ## Following a running simulation
 
