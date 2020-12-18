@@ -239,13 +239,44 @@ static-time-series-resource   0.5                  ac5e9e9f5461   28 seconds ago
 
 ### Registering new component type to the Platform manager
 
-TODO: description why the registration is needed
-TODO: show the example domain JSON file
-TODO: describe the minimum requirements for static and for dynamic component
-TODO: describe the connection to the Start message in the defined attributes
-TODO: describe the connection to the environment variables
-TODO: full specification for the JSON objects
-TODO: commands to include updated JSON file for Platform Manager
+Before Platform Manager can be used to start a new simulation that includes a new domain component, the new component type has to be registered to the Platform Manager. The registering is done to allow the Platform Manager to know whether the new component is a statically or dynamically deployed component and in the latter case to also know which Docker image to use when deploying the dynamic component. The registration process also allows the user to mark some parameters as required so that the Platform Manager does not start a new simulation run in vain if essential information is missing from the simulation configuration.
+
+The domain components are registered for the Platform Manager in the JSON file [supported_components_domain.json](supported_components_domain.json) that is found at the root folder of the `platform-manager`repository. In the file, registrations for the statically deployed Grid component and dynamically deployed Static Time Series Resource component have been made by default. The attribute definitions should match to the ones given in the process parameter block for the component in the [Start message](https://wiki.eduuni.fi/pages/viewpage.action?pageId=164959964).
+
+The supported component file should be valid JSON object with keys being the component type names and the values being registration block for the component.
+
+The possible attributes for the component registration block:
+
+- `Type` (required)
+    - either `"dynamic"` or `"static"` depending on the deployment type of the component
+- `DockerImage` (required for dynamic component, not needed for static component)
+    - the Docker image name including the tag for a dynamically deployed component
+    - this should match to what was used in file `build/domain/docker-compose-build-domain.yml` when building the Docker images for the domain components
+- `Description` (optional)
+    - description for the component
+    - not yet used anywhere in the current version
+- `Attributes` (optional)
+    - key-value list of the registered attributes for the component
+    - each key should be the attribute name that is used in the Start message in this components process parameters block
+    - each value should be an attribute block where each block can have the following attributes:
+        - `Optional` (optional)
+            - either `true` or `false` depending on whether the attribute can be omitted or not
+            - the default value is `false`, i.e. the attribute is required
+            - if a component is not given all the required attributes in the simulation configuration file, the simulation will not be started
+            - for optional attribute, the value in the `Default` field is used if the attribute is not included in the simulation configuration file
+        - `Default` (required if attribute is optional, otherwise, not needed)
+            - the value used for the attribute if the attribute is not included in the simulation configuration file
+        - `Environment` (optional, not needed with static components)
+            - the environment variable that is set when this attribute is used
+            - the default name for the environment variable is the same as the attribute name in the key-value list
+    - any attribute that is included in the key-value list will always be included in the Start message process parameter block (either with the default value or the value given in the simulation configuration file)
+    - any attribute that is not included in the key-value list but is included as an attribute in the simulation configuration file will also be included in the Start message
+
+After the file `supported_components_domain.json` has been modified to include all the required domain components, the Dockerfile for the Platform Manager has to be built again, otherwise the changes will not be included when starting a new simulation. This can be done by using the same command that was used in the installation process to build the core components. In the root folder of the `platform-manager` repository, use command:
+
+```bash
+source platform_setup_core.sh
+```
 
 ### Specifying the simulation configuration file
 
