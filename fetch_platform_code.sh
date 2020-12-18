@@ -1,7 +1,7 @@
 #!/bin/bash
 
 current_folder=$(pwd)
-read -p "Do you want clone the core component repositories to the folder $current_folder? " answer
+read -p "Do you want clone the core component repositories to the folder $current_folder? [y/n] " answer
 if [[ -z "$answer" ]] || [[ "$answer" != "y" ]]
 then
     return 0 2> /dev/null || exit 0
