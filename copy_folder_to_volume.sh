@@ -13,6 +13,7 @@ docker run -d --name $helper_container --volume $volume_name:$volume_folder:rw u
 for filename in $(find $folder -type f | sed "s/$(echo "$folder/" | sed 's/\//\\\//g')//")
 do
     echo "Copying file $folder/$filename"
+    docker exec -t $helper_container mkdir -p $folder/$(dirname ${filename})
     docker cp $folder/$filename $helper_container:$volume_folder/$filename > /dev/null
 done
 
