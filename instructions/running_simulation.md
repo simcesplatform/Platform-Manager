@@ -166,6 +166,26 @@ For statically deployed components the component code repository should also inc
 
 A dynamically deployed component should include a Dockerfile that can be used to build the Docker image for the container. See the section [Building Docker images for domain components](#building-docker-images-for-domain-components) on how to build the Docker images for the dynamically deployed domain components.
 
+### Making resource files available for the Platform Manager
+
+Any resource file that is used by a dynamically deployed component during a simulation run, needs to be made available for the Platform Manager. Example for a resource file is the CSV file that is used as input with the Static Time Series Resource component.
+
+Any resource files that are used by statically deployed components are not required to be accessible by the Platform Manager.
+
+To make a resource file available for the Platform Manager:
+
+1. Copy the resource file to the `resources` folder inside the `platform-manager` repository. The files can be either directly at the
+resources folder (like the resource files for EC scenario demo) or inside a subfolder.
+2. From the root folder of the `platform-manager` repository run the command:
+
+    ```bash
+    source platform_domain_setup.sh
+    ```
+
+Note that due to the limitation of the current Platform Manager implementation all the files included in the resources folder will be made available for all the dynamically deployed domain components. Also, to avoid errors any file that is currently being used in a running simulation should not be modified while the simulation is still running.
+
+The command above also builds all the Docker images for the dynamically deployed domain components, so it could show some errors in the output if the next section [Building Docker images for domain components](#building-docker-images-for-domain-components) has not yet been handled.
+
 ### Building Docker images for domain components
 
 If the component that should be dynamically deployed does not have a ready-made Dockerfile it can be created using the template file [Dockerfile-template](Dockerfile-template) as a starting point. It is based on the Dockerfile for the Static Time Series Resource component. The template file contains comment lines that should help creating a Dockerfile for a new component. The new Dockerfile should be placed at the root folder of the component source code.
@@ -195,8 +215,27 @@ For each dynamically deployed component there should be its own block with a sim
 - `<path_to_component_folder>` is the path to the component folder where the Dockerfile is found. In the Static Time Series Resource example a relative path is used.
 - `<docker_filename>` is the filename for the Dockerfile in the folder given in the previous setting.
 
-TODO: instructions to comment out unneeded components
-TODO: instructions to build domain images
+If the docker-compose file contains one or more components that has not been installed, the 5 lines containing the component block can be commented out by adding the number sign (or hashtag) character, #, to the beginning of the lines in within the block. For example if the Static Time Series Resource component is not installed and will not be needed those lines can be commented out when editing the docker-compose file.
+
+Once the docker-compose file has been modified, the Docker images that the Platform Manager will use when starting a simulation run can be built by using the following command from the root folder of the Platform Manager repository:
+
+```bash
+source platform_domain_setup.sh
+```
+
+After running the script the existing Docker images can be checked using the command:
+
+```bash
+docker images
+```
+
+In the output listing there should be a line for each of the included components. Example listing when including the Static Time Series Resource using the above example (output lines for the other images are omitted):
+
+```text
+REPOSITORY                    TAG                  IMAGE ID       CREATED          SIZE
+static-time-series-resource   0.5                  ac5e9e9f5461   28 seconds ago   937MB
+...
+```
 
 ### Registering new component type to the Platform manager
 
