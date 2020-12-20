@@ -30,7 +30,7 @@
             {
                 "Environment": "SIMULATION_MANAGER_NAME",
                 "Optional": true,
-                "Default": "simulation_manager"
+                "Default": "SimulationManager"
             },
             "EpochTimerInterval":
             {

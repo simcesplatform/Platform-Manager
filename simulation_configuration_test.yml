@@ -11,7 +11,7 @@ Components:
         slow_dummy:
 
         # 2 Dummy components called "fast_dummy_1" and "fast_dummy_2" using shorter wait times than the default values
-        # and a 20 percent chance of the Status message containing a warning
+        # and a 20 percent chance of the Status message they send containing a warning
         fast_dummy:
             duplication_count: 2
             MinSleepTime: 0.5
