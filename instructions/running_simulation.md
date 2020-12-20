@@ -149,10 +149,10 @@ After the simulation run has been completed you should be able to use the Log Re
 
 There are a couple steps before a simulation run using user developed components can be be started using the Platform Manager:
 
-- All the components have to be installed.
+- All the components have to be installed. ([Installing a new domain component](#installing-a-new-domain-component))
     - With statically deployed components this also involves starting the component manually.
     - With dynamically deployed components this involves building the Docker image for the component. Also any static resource files (for example CSV files) have to be made available for the Platform Manager.
-- All the components have to be registered to the Platform Manager.
+- All the components have to be registered to the Platform Manager. ([Registering new component type to the Platform manager](#registering-new-component-type-to-the-platform-manager))
 
 After the component installation and registration a new simulation configuration file can be created and then used to start a new simulation run. See section [Running a new simulation](#running-a-new-simulation) for instructions regarding running a simulation.
 
@@ -168,7 +168,7 @@ but depending on the component there might also be other requirements. `<compone
 
 For statically deployed components the component code repository should also include instructions on how to install and start the component that should be followed.
 
-A dynamically deployed component should include a Dockerfile that can be used to build the Docker image for the container. See the section [Building Docker images for domain components](#building-docker-images-for-domain-components) on how to build the Docker images for the dynamically deployed domain components.
+A dynamically deployed component should include a Dockerfile that can be used to build the Docker image for the container. See the section [Building Docker images for domain components](#building-docker-images-for-domain-components) on how to build the Docker images for the dynamically deployed domain components. Also, any resource file that a dynamically deployed component uses must be available for the Platform Manager. See the section [Making resource files available for the Platform Manager](#making-resource-files-available-for-the-platform-manager) for instructions on how to do that.
 
 ### Making resource files available for the Platform Manager
 
@@ -186,7 +186,7 @@ resources folder (like the resource files for EC scenario demo) or inside a subf
     source platform_domain_setup.sh
     ```
 
-Note that due to the limitation of the current Platform Manager implementation all the files included in the resources folder will be made available for all the dynamically deployed domain components. Also, to avoid errors any file that is currently being used in a running simulation should not be modified while the simulation is still running.
+Note that due to the limitation of the current Platform Manager implementation all the files included in the resources folder will be made available for all the dynamically deployed domain components. Also, to avoid errors, any file that is currently being used in a running simulation should not be modified while the simulation is still running.
 
 The command above also builds all the Docker images for the dynamically deployed domain components, so it could show some errors in the output if the next section [Building Docker images for domain components](#building-docker-images-for-domain-components) has not yet been handled.
 
@@ -261,14 +261,14 @@ The possible attributes for the component registration block:
     - not yet used anywhere in the current version
 - `Attributes` (optional)
     - key-value list of the registered attributes for the component
-    - each key should be the attribute name that is used in the Start message in this components process parameters block
+    - each key should be the attribute name that is used in the Start message in the component's process parameters block
     - each value should be an attribute block where each block can have the following attributes:
         - `Optional` (optional)
             - either `true` or `false` depending on whether the attribute can be omitted or not
             - the default value is `false`, i.e. the attribute is required
             - if a component is not given all the required attributes in the simulation configuration file, the simulation will not be started
             - for optional attribute, the value in the `Default` field is used if the attribute is not included in the simulation configuration file
-        - `Default` (required if attribute is optional, otherwise, not needed)
+        - `Default` (required if attribute is optional, otherwise not needed)
             - the value used for the attribute if the attribute is not included in the simulation configuration file
         - `Environment` (optional, not needed with static components)
             - the environment variable that is set when this attribute is used
@@ -286,8 +286,8 @@ source platform_setup_core.sh
 
 To start a new simulation run:
 
-- Specify the simulation by creating a configuration file
-- Use the start script to start the simulation
+- Specify the simulation by creating a configuration file. ([Specifying the simulation configuration file](#specifying-the-simulation-configuration-file))
+- Use the start script to start the simulation. ([Starting a new simulation run](#starting-a-new-simulation-run))
 
 ### Specifying the simulation configuration file
 
@@ -295,7 +295,7 @@ The simulation configuration file specifies parameters for the core platform com
 
 The configuration file uses [YAML](https://en.wikipedia.org/wiki/YAML) format and has 2 sections: `Simulation` for specifying the core platform parameters and `Components` for specifying the participating components and their parameters. The component section has a close relation to the [Start (message)](https://wiki.eduuni.fi/pages/viewpage.action?pageId=164959964). YAML uses Python-style to indicate nesting and it is advisable to be consistent in the use of indentation. All the examples given here use indentation with 4 spaces.
 
-Example configuration file with an explanation for the specified simulation is found at the section [Example simulation configuration file](#example-simulation-configuration-file). Configuration file template and full specification is found at the section [Simulation configuration file specification](#simulation-configuration-file-specification).
+Example configuration file with an explanation for the specified simulation is found at the section [Example simulation configuration file](#example-simulation-configuration-file). Configuration file template and  additional specification is found at the section [Simulation configuration file specification](#simulation-configuration-file-specification).
 
 #### Example simulation configuration file
 
@@ -356,7 +356,7 @@ Components:  # these are the names of the component implementations (defined in 
             ResourceStateFile: "/resources/PV_large.csv"
 ```
 
-Note that while string values can be in most cases be given without double quotes in YAML files they are consistently used in the above example to avoid any possible edge cases where the strings without quotes might be interpreted as something other than a single string value.
+Note that, while string values can be in most cases be given without double quotes in YAML files, they are consistently used in the above example to avoid any possible edge cases where the strings without quotes might be interpreted as something other than a single string value.
 
 A breakdown of parameters set in the example configuration using the knowledge of the default values from [Start (message)](https://wiki.eduuni.fi/pages/viewpage.action?pageId=164959964) and the supported component settings from [supported_components_core.json](supported_components_core.json) and [supported_components_domain.json](supported_components_domain.json). A more detailed explanation on what each parameter means for the used components can be found on the [Start (message)](https://wiki.eduuni.fi/pages/viewpage.action?pageId=164959964) page.
 
@@ -420,7 +420,7 @@ where `<configuration_file>` is the filename containing the YAML configuration f
 
 ## Following a running simulation
 
-There are a couple of ways to follow a running simulation that has been started by the Platform Manager. Commands for the first 2 ways is given by Platform Manager after the simulation has been started.
+There are a couple of ways to follow a running simulation that has been started by the Platform Manager. Commands for the first 2 ways are given by Platform Manager after the simulation has been started.
 
 - All the component outputs can be followed using a Bash script `follow_simulation.sh`.
 - The output from the Simulation Manager can be followed using `docker logs` command.
@@ -438,11 +438,11 @@ source follow_simulation.sh <id_number>
 
 where `<id_number>` is given by the Platform Manager after the simulation run has been started. The full command is also part of the Platform Manager output.
 
-Note that due to the way this follow script has been implemented, it cannot be easily canceled and if you want to stop following the simulation the easiest way to do so is to close the terminal window.
+Note that due to the way this follow script has been implemented, it cannot be easily canceled and if you want to stop following the simulation the easiest way to do so is to close the terminal window. Closing the terminal window while a simulation is running does not affect the actual simulation.
 
 ### Using docker logs command
 
-To follow the advancing of the simulation the output from the Simulation Manager can be followed using the command (can be used from any folder and does not require Bash compatible terminal, e.g. works also with Command Prompt in Windows):
+To follow the advancing of the simulation, the output from the Simulation Manager can be followed using the command (can be used from any folder and does not require Bash compatible terminal, e.g. works also with Command Prompt in Windows):
 
 ```bash
 docker logs --follow Sim<id_number>_simulation_manager
@@ -465,7 +465,7 @@ After the simulation, the output from the components can be found stored in log 
     source copy_logs.sh
     ```
 
-The filenames for the log files use the format `logfile_<component_name>.log`. Note that the files can contain outputs from multiple simulations. The latest outputs are at the end of log files.
+The filenames for the log files use the format `logfile_<component_name>.log`. Note that the files can contain outputs from multiple simulations. The latest outputs are at the end of the log files.
 
 ## Stopping a running simulation
 
