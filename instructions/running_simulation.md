@@ -8,12 +8,15 @@
 - [Running EC scenario demo simulation](#running-ec-scenario-demo-simulation)
     - [Installing the domain component](#installing-the-domain-component)
     - [Starting the simulation run](#starting-the-simulation-run)
-- [Running a new simulation](#running-a-new-simulation)
+- [Preparations for a new simulation](#preparations-for-a-new-simulation)
     - [Installing a new domain component](#installing-a-new-domain-component)
     - [Making resource files available for the Platform Manager](#making-resource-files-available-for-the-platform-manager)
     - [Building Docker images for domain components](#building-docker-images-for-domain-components)
     - [Registering new component type to the Platform manager](#registering-new-component-type-to-the-platform-manager)
+- [Running a new simulation](#running-a-new-simulation)
     - [Specifying the simulation configuration file](#specifying-the-simulation-configuration-file)
+        - [Example simulation configuration file](#example-simulation-configuration-file)
+        - [Simulation configuration file specification](#simulation-configuration-file-specification)
     - [Starting a new simulation run](#starting-a-new-simulation-run)
 - [Following a running simulation](#following-a-running-simulation)
     - [Using follow simulation script](#using-follow-simulation-script)
@@ -142,7 +145,7 @@ After the simulation run has been completed you should be able to use the Log Re
     8;2020-06-25T04:00:00Z;1.89;0.76
     ```
 
-## Running a new simulation
+## Preparations for a new simulation
 
 There are a couple steps before a simulation run using user developed components can be be started using the Platform Manager:
 
@@ -151,7 +154,7 @@ There are a couple steps before a simulation run using user developed components
     - With dynamically deployed components this involves building the Docker image for the component. Also any static resource files (for example CSV files) have to be made available for the Platform Manager.
 - All the components have to be registered to the Platform Manager.
 
-After the component installation and registration a new simulation configuration file can be created and then used to start a new simulation run.
+After the component installation and registration a new simulation configuration file can be created and then used to start a new simulation run. See section [Running a new simulation](#running-a-new-simulation) for instructions regarding running a simulation.
 
 ### Installing a new domain component
 
@@ -279,9 +282,22 @@ After the file `supported_components_domain.json` has been modified to include a
 source platform_setup_core.sh
 ```
 
+## Running a new simulation
+
+To start a new simulation run:
+
+- Specify the simulation by creating a configuration file
+- Use the start script to start the simulation
+
 ### Specifying the simulation configuration file
 
-TODO: description about the simulation configuration file
+The simulation configuration file specifies parameters for the core platform components, for example the epoch length, and all the components and their parameters that will participate in the simulation.
+
+The configuration file uses [YAML](https://en.wikipedia.org/wiki/YAML) format and has 2 sections: `Simulation` for specifying the core platform parameters and `Components` for specifying the participating components and their parameters. The component section has a close relation to the [Start (message)](https://wiki.eduuni.fi/pages/viewpage.action?pageId=164959964). YAML uses Python-style to indicate nesting and it is advisable to be consistent in the use of indentation. All the examples given here use indentation with 4 spaces.
+
+Example configuration file with an explanation for the specified simulation is found at the section [Example simulation configuration file](#example-simulation-configuration-file). Configuration file template and full specification is found at the section [Simulation configuration file specification](#simulation-configuration-file-specification).
+
+#### Example simulation configuration file
 
 Example simulation configuration file for a simulation where a Grid component has been added to the EC scenario can be found at [simulation_configuration_grid.yml](simulation_configuration_grid.yml):
 
@@ -341,7 +357,8 @@ Components:  # these are the names of the component implementations (defined in 
 ```
 
 Note that while string values can be in most cases be given without double quotes in YAML files they are consistently used in the above example to avoid any possible edge cases where the strings without quotes might be interpreted as something other than a single string value.
-A breakdown of parameters set in the example configuration using the knowledge of the default values from [Start (message)](https://wiki.eduuni.fi/pages/viewpage.action?pageId=164959964) and the supported component settings from [supported_components_core.json](supported_components_core.json) and [supported_components_domain.json](supported_components_domain.json):
+
+A breakdown of parameters set in the example configuration using the knowledge of the default values from [Start (message)](https://wiki.eduuni.fi/pages/viewpage.action?pageId=164959964) and the supported component settings from [supported_components_core.json](supported_components_core.json) and [supported_components_domain.json](supported_components_domain.json). A more detailed explanation on what each parameter means for the used components can be found on the [Start (message)](https://wiki.eduuni.fi/pages/viewpage.action?pageId=164959964) page.
 
 - The required overall parameters
     - The simulation name is set to `"Energy community with Grid demo"`
@@ -350,7 +367,7 @@ A breakdown of parameters set in the example configuration using the knowledge o
     - The duration of each epoch is set to `3600` seconds, i.e. 1 hour
     - Maximum number of epochs is set to `24`, i.e. the simulation will last 24 hours or 1 day
 - The optional overall parameters
-    - The Simulation Manager name in the simulation is set to `"Manager"`, the default name would be `"simulation_manager"`
+    - The Simulation Manager name in the simulation is set to `"Manager"`, the default name would be `"SimulationManager"`
     - The time duration until Simulation Manager tries to resend the epoch message is set to `20` seconds, the default duration would be `120` seconds
     - The maximum number of epoch resends the Simulation Manager is allowed to try before ending the simulation is set to `2` epoch resends, the default would be `5` epoch resends
     - The maximum number of messages the buffer in Log Writer can have is set to `10` messages, the default would be `20` messages
@@ -375,9 +392,21 @@ A breakdown of parameters set in the example configuration using the knowledge o
         - The `ResourceType` parameter is set to `"Generator"` in both generator components
         - The `ResourceStateFile` parameter is set to the filename where the resource component will find it after it has been deployed, for example the filename for the `"pv_small"` component is set to `"/resources/PV_small.csv"`
 
-TODO: create a template configuration file
+#### Simulation configuration file specification
 
-TODO: full specification for the configuration file
+The YAML configuration for a simulation run uses the following format:
+
+```yaml
+Simulation:
+    # Parameters for the core components
+
+Components:
+    # Definitions for all the participating components and their parameters
+```
+
+File [simulation_configuration_template.yml](../simulation_configuration_template.yml) contains a template that can be used as a base for defining new simulations. The template file contains comments that explain the structure of the file.
+
+The definitions for the participating components have a correspondence to the process parameters block in the Start message An example Start message that corresponds to the template configuration is given in [instructions/start_message_template.json](start_message_template.json).
 
 ### Starting a new simulation run
 
@@ -387,7 +416,7 @@ To start a new simulation eun, use Bash compatible terminal to navigate to the `
 source start_simulation.sh <configuration_file>
 ```
 
-where `<configuration_file>` is the filename containing YAML configuration for the simulation run.
+where `<configuration_file>` is the filename containing the YAML configuration for the simulation run.
 
 ## Following a running simulation
 
