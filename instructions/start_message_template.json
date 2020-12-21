@@ -2,7 +2,7 @@
     "Type" : "Start",
     "Timestamp" : "2020-12-21T06:15:07.111Z",
     "SimulationId" : "2020-12-21T06:15:01.234Z",
-    "SimulationSpecificExchange" : "procem.20201221-061501-234",
+    "SimulationSpecificExchange" : "procem-20201221-061501-234",
     "SimulationName" : "Insert simulation name here",
     "SimulationDescription" : "Insert simulation description here",
     "ProcessParameters" : {

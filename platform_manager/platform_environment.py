@@ -72,7 +72,7 @@ class PlatformEnvironment:
             RABBITMQ_EXCHANGE_DURABLE: False
         }
         self.__rabbitmq_exchange_prefix = cast(
-            str, EnvironmentVariable(RABBITMQ_EXCHANGE_PREFIX, str, "procem.").value)
+            str, EnvironmentVariable(RABBITMQ_EXCHANGE_PREFIX, str, "procem-").value)
 
         # setup the MongoDB parameters for components needing database access
         self.__mongodb = load_environmental_variables(*default_mongodb_definitions())
