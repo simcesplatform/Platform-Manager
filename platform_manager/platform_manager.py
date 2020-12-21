@@ -105,6 +105,8 @@ class PlatformManager:
                     "    source follow_simulation.sh {:s}".format(simulation_identifier))
         LOGGER.info("Alternatively, the simulation manager logs can by viewed by:\n" +
                     "    docker logs --follow {:s}".format(manager_container_name))
+        LOGGER.info("Platform manager has finished starting the simulation and will now stop.")
+        LOGGER.info("The simulation will continue to run on the background.")
 
         return True
 
