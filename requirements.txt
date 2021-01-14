@@ -1,4 +1,4 @@
-aio_pika==6.6.1
+aio_pika==6.7.1
 aiodocker==0.19.1
 aiounittest==1.4.0
 docker==4.4.1
