@@ -159,7 +159,7 @@ class ContainerStarter:
             first_network = {}
 
         try:
-            container = await self.__docker_client.containers.create_or_replace(
+            container = await self.__docker_client.containers.create(
                 name=container_name,
                 config={
                     "Image": container_configuration.image,
