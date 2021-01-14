@@ -3,15 +3,34 @@
 """This module contains the functionality for starting Docker containers."""
 
 import asyncio
+from asyncio.events import AbstractEventLoop
+from functools import wraps, partial
+import inspect
 import re
-from typing import cast, Dict, List, Union
+from typing import Any, Callable, cast, Dict, List, Optional, Union
 
 from aiodocker import Docker
 from aiodocker.containers import DockerContainer
+from aiohttp.client_exceptions import ClientError
+from docker import from_env as docker_client_from_env, DockerClient
+from docker.errors import APIError
+from docker.models.containers import Container
+from docker.models.networks import Network
 
 from tools.tools import EnvironmentVariableValue, FullLogger
 
 LOGGER = FullLogger(__name__)
+
+
+def async_wrap(synchronous_function: Callable):
+    """Wraps a synchronous function to an asynchronous coroutine."""
+    @wraps(synchronous_function)
+    async def run(*args, event_loop: Optional[AbstractEventLoop] = None, executor: Any = None, **kwargs):
+        if event_loop is None:
+            event_loop = asyncio.get_event_loop()
+        partial_function = partial(synchronous_function, *args, **kwargs)
+        return await event_loop.run_in_executor(executor, partial_function)
+    return run
 
 
 def get_container_name(container: DockerContainer) -> str:
@@ -91,7 +110,11 @@ class ContainerStarter:
         self.__prefix_pattern = re.compile("{:s}([0-9]{{{:d}}})_".format(
             self.__class__.PREFIX_START, self.__class__.PREFIX_DIGITS))    # Sim([0-9]{2})_
 
+        # the docker client using aiodocker library
         self.__docker_client = Docker()
+        # the docker client using docker library, used only if necessary
+        self.__docker_client_synchronous = None  # type: Optional[DockerClient]
+
         self.__lock = asyncio.Lock()
 
     async def close(self):
@@ -121,6 +144,98 @@ class ContainerStarter:
         # no previous simulation containers found
         return 0
 
+    async def create_container(self, container_name: str, container_configuration: ContainerConfiguration) \
+            -> Optional[Union[DockerContainer, Container]]:
+        """
+        Creates and returns a Docker container according to the given configuration.
+        Uses the 'aiodocker' library by default and if that throws an exception, tries using the 'docker' library.
+        """
+        # The API specification for Docker Engine: https://docs.docker.com/engine/api/v1.40/
+        LOGGER.debug("Creating container: {:s}".format(container_name))
+        if container_configuration.networks:
+            first_network_name = container_configuration.networks[0]
+            first_network = {first_network_name: {}}
+        else:
+            first_network = {}
+
+        try:
+            container = await self.__docker_client.containers.create_or_replace(
+                name=container_name,
+                config={
+                    "Image": container_configuration.image,
+                    "Env": container_configuration.environment,
+                    "HostConfig": {
+                        "Binds": container_configuration.volumes,
+                        "AutoRemove": True
+                    },
+                    "NetworkingConfig": {
+                        "EndpointsConfig": first_network
+                    }
+                }
+            )
+            if not isinstance(container, DockerContainer):
+                LOGGER.warning("Failed to create container: {:s}".format(
+                    container_configuration.container_name))
+                return None
+
+            # When creating a container, it can only be connected to one network.
+            # The other networks have to be connected separately.
+            for other_network_name in container_configuration.networks[1:]:
+                other_network = await self.__docker_client.networks.get(net_specs=other_network_name)
+                await other_network.connect(
+                    config={
+                        "Container": container_name,
+                        "EndpointConfig": {}
+                    }
+                )
+
+            return container
+
+        except ClientError as client_error:
+            LOGGER.warning("Received {}: {}".format(type(client_error).__name__, client_error))
+            LOGGER.info("Trying the 'docker' library instead of 'aiodocker'")
+            return await self._create_container_backup(container_name, container_configuration)
+
+    async def _create_container_backup(self, container_name: str, container_configuration: ContainerConfiguration) \
+            -> Optional[Container]:
+        """
+        Creates and returns a Docker container according to the given configuration.
+        Uses the 'docker' library.
+        """
+        if not container_configuration.networks:
+            first_network = None
+        else:
+            first_network = container_configuration.networks[0]
+
+        try:
+            if self.__docker_client_synchronous is None:
+                self.__docker_client_synchronous = await async_wrap(docker_client_from_env)()
+            container = await async_wrap(self.__docker_client_synchronous.containers.create)(
+                name=container_name,
+                image=container_configuration.image,
+                environment=container_configuration.environment,
+                volumes=container_configuration.volumes,
+                network=first_network,
+                auto_remove=True
+            )
+            if not isinstance(container, Container):
+                LOGGER.warning("Failed to create container: {:s}".format(
+                    container_configuration.container_name))
+                return None
+
+            other_networks = await async_wrap(self.__docker_client_synchronous.networks.list)(
+                names=container_configuration.networks[1:]
+            )
+            for other_network in other_networks:
+                if isinstance(other_network, Network):
+                    await async_wrap(other_network.connect)(container)
+
+            return container
+
+        except APIError as docker_error:
+            LOGGER.warning("Received {}: {}".format(type(docker_error).__name__, docker_error))
+            return None
+
     async def start_simulation(self, simulation_configurations: List[ContainerConfiguration]) -> Union[List[str], None]:
         """
         Starts a Docker container with the given configuration parameters.
@@ -133,54 +248,27 @@ class ContainerStarter:
                 LOGGER.warning("No free simulation indexes.")
                 return None
 
-            simulation_containers = []
-            container_names = []
+            simulation_containers = []  # type: List[Union[DockerContainer, Container]]
+            container_names = []        # type: List[str]
             for container_configuration in simulation_configurations:
                 full_container_name = (
                     self.__container_prefix.format(index=simulation_index) +
                     container_configuration.container_name)
                 container_names.append(full_container_name)
 
-                # The API specification for Docker Engine: https://docs.docker.com/engine/api/v1.40/
-                LOGGER.debug("Creating container: {:s}".format(full_container_name))
-                if container_configuration.networks:
-                    first_network_name = container_configuration.networks[0]
-                    first_network = {first_network_name: {}}
-                else:
-                    first_network = {}
-                container = await self.__docker_client.containers.create_or_replace(
-                    name=full_container_name,
-                    config={
-                        "Image": container_configuration.image,
-                        "Env": container_configuration.environment,
-                        "HostConfig": {
-                            "Binds": container_configuration.volumes,
-                            "AutoRemove": True
-                        },
-                        "NetworkingConfig": {
-                            "EndpointsConfig": first_network
-                        }
-                    }
-                )
-                if not isinstance(container, DockerContainer):
-                    LOGGER.warning("Failed to create container: {:s}".format(container_configuration.container_name))
+                new_container = await self.create_container(full_container_name, container_configuration)
+                if new_container is None:
                     return None
+                simulation_containers.append(new_container)
 
-                # When creating a container, it can only be connected to one network.
-                # The other networks have to be connected separately.
-                for other_network_name in container_configuration.networks[1:]:
-                    other_network = await self.__docker_client.networks.get(net_specs=other_network_name)
-                    await other_network.connect(
-                        config={
-                            "Container": full_container_name,
-                            "EndpointConfig": {}
-                        }
-                    )
-                simulation_containers.append(container)
-
+            # start the created containers
             for container_name, container in zip(container_names, simulation_containers):
                 LOGGER.info("Starting container: {:s}".format(container_name))
-                await container.start()
+                if inspect.iscoroutinefunction(container.start):
+                    start_function = container.start
+                else:
+                    start_function = async_wrap(container.start)
+                await start_function()
 
             return container_names
 
