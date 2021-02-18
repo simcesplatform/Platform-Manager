@@ -237,6 +237,8 @@ def create_folder(target_folder: Path):
         if resolved_target.parent != resolved_target and not resolved_target.parent.is_dir():
             create_folder(resolved_target.parent)
         resolved_target.mkdir()
+        # change the permission to allow read-write access to the folder for all users
+        resolved_target.chmod(0o777)
 
     except OSError as os_error:
         LOGGER.error("Received '{}' while creating folder '{}': {}".format(
@@ -250,6 +252,8 @@ def write_file(contents: str, filename: Path):
         create_folder(filename.parent)
         with open(filename, mode="w", encoding="UTF-8") as target_file:
             target_file.write(contents)
+        # change the permission to allow read-write access to the file for all users
+        filename.chmod(0o666)
 
     except OSError as file_error:
         LOGGER.error("Received '{}' when writing file '{}: {}".format(
