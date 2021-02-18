@@ -6,21 +6,25 @@ This module contains data classes for storing information about the components t
 
 from __future__ import annotations
 import dataclasses
-import json
-from typing import Any, Dict, Optional, Union
+import pathlib
+from typing import Any, Dict, Optional, Tuple, Union
+
+import yaml
+from yaml.parser import ParserError
+from yaml.scanner import ScannerError
 
 from tools.tools import FullLogger
 
 LOGGER = FullLogger(__name__)
 
-CORE_COMPONENT_TYPE = "core"        # there can be only one component of each "core" type within one simulation run
-DYNAMIC_COMPONENT_TYPE = "dynamic"  # a component deployed using Docker, multiple instances of each type allowed
-STATIC_COMPONENT_TYPE = "static"    # a statically deployed component, multiple instances of each type allowed
-ALLOWED_COMPONENT_TYPES = [CORE_COMPONENT_TYPE, DYNAMIC_COMPONENT_TYPE, STATIC_COMPONENT_TYPE]
+PLATFORM_COMPONENT_TYPE = "platform"  # a component managed by the platform, deployed using Docker
+EXTERNAL_COMPONENT_TYPE = "external"  # an externally managed component
+ALLOWED_COMPONENT_TYPES = [PLATFORM_COMPONENT_TYPE, EXTERNAL_COMPONENT_TYPE]
 
 COMPONENT_TYPE_SIMULATION_MANAGER = "SimulationManager"
 COMPONENT_TYPE_LOG_WRITER = "LogWriter"
 
+PARAMETER_COMPONENT_NAME = "Name"
 PARAMETER_COMPONENT_TYPE = "Type"
 PARAMETER_DESCRIPTION = "Description"
 PARAMETER_DOCKER_IMAGE = "DockerImage"
@@ -113,7 +117,7 @@ def get_component_type_parameters(component_type_definition: Dict[str, Any]) -> 
         return None
 
     docker_image = component_type_definition.get(PARAMETER_DOCKER_IMAGE, None)
-    if docker_image is not None:
+    if isinstance(docker_image, str):
         docker_image = ImageName(*docker_image.split(":"))
 
     return ComponentParameters(
@@ -130,33 +134,40 @@ def get_component_type_parameters(component_type_definition: Dict[str, Any]) -> 
             for attribute_name, attribute_definition in component_type_definition.get(
                 PARAMETER_ATTRIBUTES, {}).items()
         },
-        include_rabbitmq_parameters=deployment_type != STATIC_COMPONENT_TYPE,
-        include_general_parameters=deployment_type != STATIC_COMPONENT_TYPE
+        include_rabbitmq_parameters=deployment_type != EXTERNAL_COMPONENT_TYPE,
+        include_general_parameters=deployment_type != EXTERNAL_COMPONENT_TYPE
     )
 
 
-def load_component_parameters_from_json(json_filename: str) -> ComponentCollectionParameters:
-    """Loads and returns the component type specification from a JSON file."""
-    component_types = {}
+def load_component_parameters_from_yaml(yaml_filename: pathlib.Path) -> Optional[Tuple[str, ComponentParameters]]:
+    """Loads and returns the component name and type specification from a YAML file."""
     try:
-        with open(json_filename, mode="r", encoding="UTF-8") as component_file:
-            component_type_definitions = json.load(component_file)
+        with open(yaml_filename, mode="r", encoding="UTF-8") as component_file:
+            component_type_definition = yaml.safe_load(component_file)
 
-            for component_type, component_type_definition in component_type_definitions.items():
-                component_type_parameters = get_component_type_parameters(component_type_definition)
-                if component_type_parameters is None:
-                    LOGGER.error("Could not create component type parameters for '{}'".format(component_type))
-                    continue
+        if not isinstance(component_type_definition, dict):
+            LOGGER.warning("The file '{}' does not contain a dictionary.".format(yaml_filename))
+            return None
 
-                if component_type == COMPONENT_TYPE_LOG_WRITER:
-                    component_type_parameters.include_mongodb_parameters = True
-                component_types[component_type] = component_type_parameters
+        component_name = component_type_definition.get(PARAMETER_COMPONENT_NAME, None)
+        if not isinstance(component_name, str):
+            LOGGER.warning("The file '{}' does not contain component name.".format(yaml_filename))
+            return None
 
-        LOGGER.debug("Loaded definitions for {} component types from {}".format(len(component_types), json_filename))
+        component_type_parameters = get_component_type_parameters(component_type_definition)
+        if component_type_parameters is None:
+            LOGGER.error("Could not create component type parameters for '{}' from '{}'".format(
+                component_name, yaml_filename))
+            return None
 
-    except (OSError, json.decoder.JSONDecodeError) as json_error:
+        if component_name == COMPONENT_TYPE_LOG_WRITER:
+            component_type_parameters.include_mongodb_parameters = True
+
+        LOGGER.info("Loaded definition for '{}' from {}".format(component_name, yaml_filename))
+        return component_name, component_type_parameters
+
+    except (OSError, TypeError, ParserError, ScannerError) as yaml_error:
         LOGGER.error("Encountered '{}' exception when loading component type definitions from '{}': {}".format(
-            str(type(json_error)), json_filename, json_error
+            type(yaml_error).__name__, yaml_filename, yaml_error
         ))
-
-    return ComponentCollectionParameters(component_types)
+        return None

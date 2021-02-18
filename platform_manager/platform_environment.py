@@ -5,28 +5,32 @@
 """
 
 import logging
+import pathlib
 from typing import Any, cast, Dict, List, Optional
 
-from platform_manager.component import CORE_COMPONENT_TYPE, STATIC_COMPONENT_TYPE, ComponentParameters, \
-                                       ComponentCollectionParameters, get_component_type_parameters, \
-                                       load_component_parameters_from_json, \
-                                       COMPONENT_TYPE_SIMULATION_MANAGER, COMPONENT_TYPE_LOG_WRITER
-from platform_manager.docker_runner import ContainerConfiguration
-from platform_manager.simulation import SimulationConfiguration, SimulationComponentConfiguration, \
-                                        DUPLICATE_CONTAINER_NAME_SEPARATOR, SIMULATION_MANAGER_NAME
 from tools.clients import default_env_variable_definitions as default_rabbitmq_definitions
-from tools.components import SIMULATION_COMPONENT_NAME, SIMULATION_ID, SIMULATION_STATE_MESSAGE_TOPIC, \
-                             SIMULATION_EPOCH_MESSAGE_TOPIC, SIMULATION_STATUS_MESSAGE_TOPIC, \
-                             SIMULATION_ERROR_MESSAGE_TOPIC
+from tools.components import (
+    SIMULATION_COMPONENT_NAME, SIMULATION_ID, SIMULATION_STATE_MESSAGE_TOPIC,
+    SIMULATION_EPOCH_MESSAGE_TOPIC, SIMULATION_STATUS_MESSAGE_TOPIC, SIMULATION_ERROR_MESSAGE_TOPIC)
 from tools.db_clients import default_env_variable_definitions as default_mongodb_definitions
 from tools.datetime_tools import get_utcnow_in_milliseconds
-from tools.tools import FullLogger, load_environmental_variables, EnvironmentVariable, EnvironmentVariableValue, \
-                        SIMULATION_LOG_LEVEL, SIMULATION_LOG_FILE, SIMULATION_LOG_FORMAT, \
-                        DEFAULT_LOGFILE_NAME, DEFAULT_LOGFILE_FORMAT
+from tools.tools import (
+    FullLogger, load_environmental_variables, EnvironmentVariable, EnvironmentVariableValue,
+    SIMULATION_LOG_LEVEL, SIMULATION_LOG_FILE, SIMULATION_LOG_FORMAT, DEFAULT_LOGFILE_NAME, DEFAULT_LOGFILE_FORMAT)
+
+from platform_manager.component import (
+    EXTERNAL_COMPONENT_TYPE, ComponentParameters, ComponentCollectionParameters,
+    get_component_type_parameters, load_component_parameters_from_yaml,
+    COMPONENT_TYPE_SIMULATION_MANAGER, COMPONENT_TYPE_LOG_WRITER)
+from platform_manager.docker_runner import ContainerConfiguration
+from platform_manager.simulation import (
+    SimulationConfiguration, SimulationComponentConfiguration,
+    DUPLICATE_CONTAINER_NAME_SEPARATOR, SIMULATION_MANAGER_NAME)
 
 LOGGER = FullLogger(__name__)
 
 TIMEOUT = 5.0
+MANIFEST_FILE_EXTENSIONS = (".yml", ".yaml")
 
 # Names for environmental variables for the platform manager
 RABBITMQ_EXCHANGE = "RABBITMQ_EXCHANGE"
@@ -35,8 +39,7 @@ RABBITMQ_EXCHANGE_DURABLE = "RABBITMQ_EXCHANGE_DURABLE"
 RABBITMQ_EXCHANGE_PREFIX = "RABBITMQ_EXCHANGE_PREFIX"
 MONGODB_APPNAME = "MONGODB_APPNAME"
 
-SUPPORTED_COMPONENTS_CORE = "SUPPORTED_COMPONENTS_CORE"
-SUPPORTED_COMPONENTS_DOMAIN = "SUPPORTED_COMPONENTS_DOMAIN"
+MANIFEST_FOLDER = "MANIFEST_FOLDER"
 
 DOCKER_NETWORK_MONGODB = "DOCKER_NETWORK_MONGODB"
 DOCKER_NETWORK_RABBITMQ = "DOCKER_NETWORK_RABBITMQ"
@@ -88,14 +91,10 @@ class PlatformEnvironment:
             (SIMULATION_ERROR_MESSAGE_TOPIC, str, "Status.Error")
         )
 
-        # load the component type definitions from the provided JSON files
+        # load the component type definitions from the component manifest files
         self.__supported_component_types = ComponentCollectionParameters()
-        for supported_components_variable in (SUPPORTED_COMPONENTS_CORE, SUPPORTED_COMPONENTS_DOMAIN):
-            self.__supported_component_types.add_types(
-                load_component_parameters_from_json(
-                    cast(str, EnvironmentVariable(supported_components_variable, str, "").value)
-                )
-            )
+        self.__manifest_folder = pathlib.Path(cast(str, EnvironmentVariable(MANIFEST_FOLDER, str, "/manifests").value))
+        self.__read_manifest_folder(self.__manifest_folder)
 
         # load the Docker network and volume related variables
         self.__docker = load_environmental_variables(
@@ -264,7 +263,7 @@ class PlatformEnvironment:
                 return None
 
             component_type_settings = self.__supported_component_types.component_types[component_type]
-            if component_type_settings.component_type == STATIC_COMPONENT_TYPE:
+            if component_type_settings.component_type == EXTERNAL_COMPONENT_TYPE:
                 # No Docker containers are created for static components
                 continue
 
@@ -303,7 +302,8 @@ class PlatformEnvironment:
                                 mongodb=component_type_settings.include_mongodb_parameters
                             ),
                             volumes=self.get_docker_volumes(
-                                resources=component_type_settings.component_type != CORE_COMPONENT_TYPE
+                                resources=component_name not in (
+                                    COMPONENT_TYPE_SIMULATION_MANAGER, COMPONENT_TYPE_LOG_WRITER)
                             )
                         )
                     )
@@ -372,6 +372,27 @@ class PlatformEnvironment:
         self.__supported_component_types.add_type(component_type, component_type_parameters)
         return True
 
+    def __read_manifest_folder(self, manifest_folder: pathlib.Path):
+        """
+        Iterates through the given folder and parses all found files and
+        adds the defined components to the list of supported component types.
+        """
+        try:
+            for manifest_file in manifest_folder.iterdir():
+                if manifest_file.is_dir():
+                    self.__read_manifest_folder(manifest_file)
+
+                elif manifest_file.is_file() and manifest_file.suffix in MANIFEST_FILE_EXTENSIONS:
+                    component_definition = load_component_parameters_from_yaml(manifest_file)
+                    if component_definition is not None:
+                        self.__supported_component_types.add_type(*component_definition)
+                    else:
+                        LOGGER.warning("No component definition could be parsed from '{}'".format(manifest_file))
+
+        except OSError as file_error:
+            LOGGER.error("Exception '{}' when trying to read manifest folder '{}': {}".format(
+                type(file_error).__name__, manifest_folder, file_error))
+
     def __get_component_processes(self, component_type: str, simulation_configuration: SimulationConfiguration) \
             -> Optional[Dict[str, SimulationComponentConfiguration]]:
         """
@@ -382,7 +403,7 @@ class PlatformEnvironment:
         uniform creation for the container configuration for both core and domain components.
         """
         component_type_settings = self.__supported_component_types.component_types[component_type]
-        if component_type_settings.component_type == CORE_COMPONENT_TYPE:
+        if component_type in (COMPONENT_TYPE_SIMULATION_MANAGER, COMPONENT_TYPE_LOG_WRITER):
             if component_type == COMPONENT_TYPE_SIMULATION_MANAGER:
                 # setup the simulation manager name and the configuration
                 component_configuration = simulation_configuration.simulation.manager_configuration
