@@ -6,8 +6,8 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
-        image: platform_manager:0.5
-        container_name: platform-manager
+        image: procem.ain.rd.tut.fi/despa/platform_manager
+        container_name: PlatformManager
         restart: "no"
         env_file:
             - rabbitmq.env
@@ -15,6 +15,7 @@ services:
             - common.env
         volumes:
             - simulation_configuration:/configuration
+            - ./manifests:/manifests:ro
             - simulation_logs:/logs
             - simulation_resources:/resources
             # NOTE: allowing access to host Docker socket can be a security risk

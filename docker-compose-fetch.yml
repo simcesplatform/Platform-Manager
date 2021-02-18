@@ -6,7 +6,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile-fetch
-        image: fetch:0.1
+        image: procem.ain.rd.tut.fi/despa/manifest_fetch
         container_name: FetchManifests
         restart: "no"
         env_file:

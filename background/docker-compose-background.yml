@@ -41,7 +41,7 @@ services:
             - mongodb_network
 
     log_reader:
-        image: log_reader:0.5
+        image: procem.ain.rd.tut.fi/despa/log_reader
         container_name: log_reader
         restart: always
         depends_on:
@@ -56,7 +56,7 @@ services:
             - mongodb_network
 
     log_writer_management:
-        image: log_writer:0.5
+        image: procem.ain.rd.tut.fi/despa/log_writer
         container_name: log_writer_management
         restart: always
         depends_on:
