@@ -4,18 +4,19 @@
 This module fetches files from GitLab or GitHub repositories.
 """
 
-from asyncio import get_event_loop, run
+from asyncio import get_event_loop, run as asyncio_run
 from asyncio.events import AbstractEventLoop
-from aiohttp import ClientSession, ClientTimeout
-from aiohttp.client_exceptions import ClientError
 from dataclasses import dataclass, field
 from functools import wraps, partial
 from pathlib import Path
-from re import compile
+from re import compile as re_compile
 from urllib.parse import quote
 from typing import Any, Callable, cast, Dict, List, Optional, Tuple, Union
 from yaml import safe_load
 from yaml.parser import ParserError
+
+from aiohttp import ClientSession, ClientTimeout
+from aiohttp.client_exceptions import ClientError
 
 from tools.tools import EnvironmentVariable, FullLogger
 
@@ -38,7 +39,7 @@ SERVER_CONFIG_REPOSITORIES = "Repositories"
 REPOSITORY_CONFIG_FILE = "File"
 REPOSITORY_CONFIG_BRANCH = "Branch"
 
-ENV_VARIABLE_PATTERN = compile(r"\${.*}")
+ENV_VARIABLE_PATTERN = re_compile(r"\${.*}")
 
 MANIFEST_FOLDER = "MANIFEST_FOLDER"
 SERVER_CONFIG_FOLDER = "SERVER_CONFIG_FOLDER"
@@ -456,4 +457,4 @@ async def start_fetch():
 
 
 if __name__ == "__main__":
-    run(start_fetch())
+    asyncio_run(start_fetch())
