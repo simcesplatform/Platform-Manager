@@ -3,6 +3,10 @@
 # The file is in YAML format. Note that the indentation is important.
 # The file should be but into the root folder of the repository containing the source code of the component.
 
+# Name is required attribute for all components.
+# It is used to identify the component type when specifying simulations.
+Name: "my_component"
+
 # Type is required attribute for all components.
 # The accepted values are "platform" for the platform managed components and
 # "external" for externally managed components.
