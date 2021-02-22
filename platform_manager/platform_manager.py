@@ -9,11 +9,12 @@ import asyncio
 import json
 from typing import Any, cast, Dict
 
+from tools.clients import RabbitmqClient
+from tools.tools import FullLogger, EnvironmentVariable
+
 from platform_manager.docker_runner import ContainerStarter
 from platform_manager.platform_environment import PlatformEnvironment
 from platform_manager.simulation import load_simulation_parameters_from_yaml
-from tools.clients import RabbitmqClient
-from tools.tools import FullLogger, EnvironmentVariable
 
 LOGGER = FullLogger(__name__)
 

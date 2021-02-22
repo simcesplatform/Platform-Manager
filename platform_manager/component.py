@@ -100,13 +100,14 @@ class ComponentCollectionParameters:
     """
     component_types: Dict[str, ComponentParameters] = dataclasses.field(default_factory=dict)
 
-    def add_type(self, component_type: str, component_parameters: ComponentParameters):
+    def add_type(self, component_type: str, component_parameters: ComponentParameters, replace: bool = True) -> bool:
         """Combines the given component parameters to the current collection."""
-        self.component_types[component_type] = component_parameters
+        if not replace and component_type in self.component_types:
+            LOGGER.debug("Did not replace component '{}' definition: replace={}".format(component_type, replace))
+            return False
 
-    def add_types(self, other_parameter_colletion: ComponentCollectionParameters):
-        """Combines the given parameter collection to the current collection."""
-        self.component_types = {**self.component_types, **other_parameter_colletion.component_types}
+        self.component_types[component_type] = component_parameters
+        return True
 
 
 def get_component_type_parameters(component_type_definition: Dict[str, Any]) -> Optional[ComponentParameters]:

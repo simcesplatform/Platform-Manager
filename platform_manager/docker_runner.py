@@ -3,11 +3,9 @@
 """This module contains the functionality for starting Docker containers."""
 
 import asyncio
-from asyncio.events import AbstractEventLoop
-from functools import wraps, partial
 import inspect
 import re
-from typing import Any, Callable, cast, Dict, List, Optional, Union
+from typing import cast, Dict, List, Optional, Union
 
 from aiodocker import Docker
 from aiodocker.containers import DockerContainer
@@ -17,20 +15,9 @@ from docker.errors import APIError
 from docker.models.containers import Container
 from docker.models.networks import Network
 
-from tools.tools import EnvironmentVariableValue, FullLogger
+from tools.tools import EnvironmentVariableValue, FullLogger, async_wrap
 
 LOGGER = FullLogger(__name__)
-
-
-def async_wrap(synchronous_function: Callable):
-    """Wraps a synchronous function to an asynchronous coroutine."""
-    @wraps(synchronous_function)
-    async def run(*args, event_loop: Optional[AbstractEventLoop] = None, executor: Any = None, **kwargs):
-        if event_loop is None:
-            event_loop = asyncio.get_event_loop()
-        partial_function = partial(synchronous_function, *args, **kwargs)
-        return await event_loop.run_in_executor(executor, partial_function)
-    return run
 
 
 def get_container_name(container: DockerContainer) -> str:

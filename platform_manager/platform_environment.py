@@ -32,6 +32,13 @@ LOGGER = FullLogger(__name__)
 TIMEOUT = 5.0
 MANIFEST_FILE_EXTENSIONS = (".yml", ".yaml")
 
+# The files in each folder under the manifest folder is gone through in an unspecified order.
+# Only the first specification for each component type is taken into account.
+# The files in the root manifest folder are given top priority.
+# The second highest priority is given to files under the folder defined by MANIFEST_FOLDER_WITH_PRIORITY.
+# All other subfolders are gone through in an unspecified order.
+MANIFEST_FOLDER_WITH_PRIORITY = "local"
+
 # Names for environmental variables for the platform manager
 RABBITMQ_EXCHANGE = "RABBITMQ_EXCHANGE"
 RABBITMQ_EXCHANGE_AUTODELETE = "RABBITMQ_EXCHANGE_AUTODELETE"
@@ -358,7 +365,8 @@ class PlatformEnvironment:
 
         return start_message
 
-    def register_component_type(self, component_type: str, component_type_definition: Dict[str, Any]) -> bool:
+    def register_component_type(self, component_type: str, component_type_definition: Dict[str, Any],
+                                replace: bool = True) -> bool:
         """Registers a new (or updates a registered) component type to the platform environment."""
         if component_type in (COMPONENT_TYPE_SIMULATION_MANAGER, COMPONENT_TYPE_LOG_WRITER):
             LOGGER.warning("Changing component type '{}' is not allowed.".format(component_type))
@@ -369,8 +377,8 @@ class PlatformEnvironment:
             LOGGER.warning("Could not register component type: {}".format(component_type))
             return False
 
-        self.__supported_component_types.add_type(component_type, component_type_parameters)
-        return True
+        check = self.__supported_component_types.add_type(component_type, component_type_parameters, replace)
+        return check
 
     def __read_manifest_folder(self, manifest_folder: pathlib.Path):
         """
@@ -378,16 +386,33 @@ class PlatformEnvironment:
         adds the defined components to the list of supported component types.
         """
         try:
+            subfolders = []  # List[Path]
+            priority_folder = None  # Optional[Path]
             for manifest_file in manifest_folder.iterdir():
                 if manifest_file.is_dir():
-                    self.__read_manifest_folder(manifest_file)
+                    # iterate through the files in the current folder before any subfolders
+                    if manifest_file.parts and manifest_file.parts[-1] == MANIFEST_FOLDER_WITH_PRIORITY:
+                        priority_folder = manifest_file
+                    else:
+                        subfolders.append(manifest_file)
 
                 elif manifest_file.is_file() and manifest_file.suffix in MANIFEST_FILE_EXTENSIONS:
                     component_definition = load_component_parameters_from_yaml(manifest_file)
                     if component_definition is not None:
-                        self.__supported_component_types.add_type(*component_definition)
+                        add_check = self.__supported_component_types.add_type(*component_definition, False)
+                        if add_check:
+                            LOGGER.info("Added component type '{}' to supported components".format(
+                                component_definition[0]))
+                        else:
+                            LOGGER.info("Component type '{}' was already registered.".format(component_definition[0]))
                     else:
                         LOGGER.warning("No component definition could be parsed from '{}'".format(manifest_file))
+
+            # iterate through the subfolder with priority name before any other subfolders
+            if priority_folder:
+                self.__read_manifest_folder(priority_folder)
+            for subfolder in subfolders:
+                self.__read_manifest_folder(subfolder)
 
         except OSError as file_error:
             LOGGER.error("Exception '{}' when trying to read manifest folder '{}': {}".format(
