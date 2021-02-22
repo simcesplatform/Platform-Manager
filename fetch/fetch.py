@@ -4,23 +4,23 @@
 This module fetches files from GitLab or GitHub repositories.
 """
 
-from asyncio import get_event_loop, run as asyncio_run
-from asyncio.events import AbstractEventLoop
+from asyncio import run as asyncio_run, TimeoutError as AsyncioTimeoutError
 from dataclasses import dataclass, field
-from functools import wraps, partial
 from pathlib import Path
 from re import compile as re_compile
 from urllib.parse import quote
-from typing import Any, Callable, cast, Dict, List, Optional, Tuple, Union
+from typing import Any, cast, Dict, List, Optional, Tuple, Union
 from yaml import safe_load
 from yaml.parser import ParserError
 
 from aiohttp import ClientSession, ClientTimeout
 from aiohttp.client_exceptions import ClientError
 
-from tools.tools import EnvironmentVariable, FullLogger
+from tools.tools import EnvironmentVariable, FullLogger, async_wrap
 
 LOGGER = FullLogger(__name__)
+
+HTTP_TIMEOUT = 10.0
 
 GITHUB = "GitHub"
 GITLAB = "GitLab"
@@ -215,17 +215,6 @@ def load_repository_parameters_from_yaml(yaml_filename: Union[str, Path]) \
         return None
 
 
-def async_wrap(synchronous_function: Callable):
-    """Wraps a synchronous function to an asynchronous coroutine."""
-    @wraps(synchronous_function)
-    async def run(*args, event_loop: Optional[AbstractEventLoop] = None, executor: Any = None, **kwargs):
-        if event_loop is None:
-            event_loop = get_event_loop()
-        partial_function = partial(synchronous_function, *args, **kwargs)
-        return await event_loop.run_in_executor(executor, partial_function)
-    return run
-
-
 def create_folder(target_folder: Path):
     """Creates the target folder if it does not exist yet."""
     try:
@@ -344,7 +333,7 @@ def get_repository_request_params(
             filename
         )
 
-    elif repository_type == GITLAB:
+    if repository_type == GITLAB:
         if host_name is None:
             host_name = DEFAULT_GITLAB_HOST
         return (
@@ -358,9 +347,8 @@ def get_repository_request_params(
             filename
         )
 
-    else:
-        LOGGER.error("Repository type '{}' is not supported".format(repository_type))
-        return None, None
+    LOGGER.error("Repository type '{}' is not supported".format(repository_type))
+    return None, None
 
 
 def get_output_filename(output_folder: str, repository_type: str,
@@ -393,8 +381,7 @@ def load_repository_parameters_form_folder(config_folder: Union[str, Path]) \
 
     if server_configurations:
         return server_configurations
-    else:
-        return None
+    return None
 
 
 async def start_fetch():
@@ -416,7 +403,7 @@ async def start_fetch():
         LOGGER.warning("No repository configurations found in the configuration folder")
         return
 
-    async with ClientSession(timeout=ClientTimeout(total=5.0)) as session:  # type: ignore
+    async with ClientSession(timeout=ClientTimeout(total=HTTP_TIMEOUT)) as session:  # type: ignore
         for server_configuration in server_configurations:
             for repository in server_configuration.repositories:
                 request_params, filename = get_repository_request_params(
@@ -450,7 +437,7 @@ async def start_fetch():
                             LOGGER.warning("Repository: {}: received status '{}' when fetching file '{}': {}".format(
                                 repository, response.status, filename, html_contents))
 
-                except ClientError as client_error:
+                except (ClientError, AsyncioTimeoutError) as client_error:
                     LOGGER.error("Received '{}' when trying to fetch file from '{}': {}".format(
                         type(client_error).__name__, repository.repository_name, client_error
                     ))

@@ -29,4 +29,4 @@ docker-compose -f background/docker-compose-background.yml up --detach
 
 echo ""
 echo "Fetching the core component manifests."
-docker-compose -f docker-compose-fetch.yml up
+docker-compose -f fetch/docker-compose-fetch.yml up
