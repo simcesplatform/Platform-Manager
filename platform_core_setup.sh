@@ -16,17 +16,12 @@ docker network create rabbitmq_network
 
 echo ""
 echo "Fetching the core Docker images from Docker registry"
-docker pull procem.ain.rd.tut.fi/despa/platform_manager
-docker pull procem.ain.rd.tut.fi/despa/simulation_manager
-docker pull procem.ain.rd.tut.fi/despa/log_writer
-docker pull procem.ain.rd.tut.fi/despa/log_reader
-docker pull procem.ain.rd.tut.fi/despa/dummy
-docker pull procem.ain.rd.tut.fi/despa/manifest_fetch
+source pull_docker_images.sh docker_images_core.txt
 
 echo ""
 echo "Starting the background Docker containers."
 docker-compose -f background/docker-compose-background.yml up --detach
 
 echo ""
-echo "Fetching the core component manifests."
+echo "Fetching the component manifests."
 docker-compose -f fetch/docker-compose-fetch.yml up

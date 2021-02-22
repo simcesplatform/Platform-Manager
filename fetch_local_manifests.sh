@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Fetches the manifest files from the given local folders and copies them to the manifests folder.
+# Fetches the given local component manifest files and copies them to the manifests folder.
 
 if [ -z "$1" ]
 then

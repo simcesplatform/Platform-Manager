@@ -8,6 +8,7 @@ import re
 from typing import cast, Dict, List, Optional, Union
 
 from aiodocker import Docker
+from aiodocker.exceptions import DockerError
 from aiodocker.containers import DockerContainer
 from aiohttp.client_exceptions import ClientError
 from docker import from_env as docker_client_from_env, DockerClient
@@ -182,6 +183,10 @@ class ContainerStarter:
             LOGGER.warning("Received {}: {}".format(type(client_error).__name__, client_error))
             LOGGER.info("Trying the 'docker' library instead of 'aiodocker'")
             return await self._create_container_backup(container_name, container_configuration)
+
+        except DockerError as docker_error:
+            LOGGER.warning("Received {}: {}".format(type(docker_error).__name__, docker_error))
+            return None
 
     async def _create_container_backup(self, container_name: str, container_configuration: ContainerConfiguration) \
             -> Optional[Container]:

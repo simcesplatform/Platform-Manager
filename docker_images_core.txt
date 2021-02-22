@@ -1,0 +1,10 @@
+# The file list for the Docker images for the core components of the simulation platform.
+# lines started with a hash character are ignored
+
+procem.ain.rd.tut.fi/despa/platform_manager:latest
+procem.ain.rd.tut.fi/despa/simulation_manager:latest
+procem.ain.rd.tut.fi/despa/log_writer:latest
+procem.ain.rd.tut.fi/despa/log_reader:latest
+procem.ain.rd.tut.fi/despa/dummy:latest
+procem.ain.rd.tut.fi/despa/manifest_fetch:latest
+procem.ain.rd.tut.fi/despa/simple_component:latest
