@@ -184,8 +184,12 @@ class PlatformEnvironment:
         # go through all the attributes registered for the component type
         for attribute_name, attribute_settings in component_type_parameters.attributes.items():
             if attribute_settings.include_in_start and attribute_name not in component_attributes.attributes:
-                if attribute_settings.optional:
+                if attribute_settings.optional and attribute_settings.default is not None:
                     variables[attribute_name] = attribute_settings.default
+                elif attribute_settings.optional:
+                    LOGGER.warning(
+                        "Optional attribute '{}' for component '{}' ".format(attribute_name, component_type) +
+                        " does not have a default value and it is not set")
                 else:
                     LOGGER.warning("Required attribute '{}' not given for component type '{}'".format(
                         attribute_name, component_type
@@ -249,6 +253,10 @@ class PlatformEnvironment:
                         env_variable_name = attribute_name
                     env_variables[env_variable_name] = attribute_settings.default
 
+                elif attribute_settings.optional:
+                    LOGGER.warning(
+                        "Optional attribute '{}' for component '{}' ".format(attribute_name, component_type) +
+                        " does not have a default value and it is not set")
                 else:
                     LOGGER.warning("Required attribute '{}' not given for component type '{}'".format(
                         attribute_name, component_type
@@ -403,6 +411,7 @@ class PlatformEnvironment:
                         if add_check:
                             LOGGER.info("Added component type '{}' to supported components".format(
                                 component_definition[0]))
+                            LOGGER.debug("Component '{}' definition: {}".format(*component_definition))
                         else:
                             LOGGER.info("Component type '{}' was already registered.".format(component_definition[0]))
                     else:

@@ -134,6 +134,7 @@ def get_component_type_parameters(component_type_definition: Dict[str, Any]) -> 
             )
             for attribute_name, attribute_definition in component_type_definition.get(
                 PARAMETER_ATTRIBUTES, {}).items()
+            if isinstance(attribute_definition, dict)
         },
         include_rabbitmq_parameters=deployment_type != EXTERNAL_COMPONENT_TYPE,
         include_general_parameters=deployment_type != EXTERNAL_COMPONENT_TYPE
