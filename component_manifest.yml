@@ -31,8 +31,8 @@ Description: "My simulation component"
 #     - if false, a simulation cannot be started without giving a value for this attribute.
 #     - By default the attribute is set as required, i.e. Optional is set to true-
 #   - Default: <the_default_value_for_the_attribute>
-#     - If this is not given and the attribute is set as optional, the attribute will not be included in the
-#       Start message nor among the environmental variables passed to a platform managed component.
+#     - If the default value is set, it is used as the attribute value in cases where the attribute
+#       is not given a value in the simulation configuration.
 #   - Environment: <the_environment_variable_name>
 #     - Ignored for externally managed components.
 #     - If this is given, the corresponding value is used as the environment variable name instead of
