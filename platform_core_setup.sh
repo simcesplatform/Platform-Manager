@@ -3,16 +3,19 @@
 # Builds the core components and starts the background containers for the Simulation platform.
 
 echo "Creating Docker volumes for the simulation platform."
-docker volume create mongodb_data
-docker volume create simulation_configuration
-docker volume create simulation_resources
-docker volume create simulation_logs
+docker volume create simces_mongodb_data
+docker volume create simces_simulation_configuration
+docker volume create simces_simulation_resources
+docker volume create simces_simulation_logs
 
 echo ""
 echo "Creating Docker network for the simulation platform."
-docker network create platform_network
-docker network create mongodb_network
-docker network create rabbitmq_network
+docker network inspect simces_platform_network >/dev/null 2>&1 || \
+    docker network create simces_platform_network
+docker network inspect simces_mongodb_network >/dev/null 2>&1 || \
+    docker network create simces_mongodb_network
+docker network inspect simces_rabbitmq_network >/dev/null 2>&1 || \
+    docker network create simces_rabbitmq_network
 
 echo ""
 echo "Fetching the core Docker images from Docker registry"

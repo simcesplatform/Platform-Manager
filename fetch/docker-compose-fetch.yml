@@ -7,7 +7,7 @@ services:
             context: ..
             dockerfile: Dockerfile-fetch
         image: procem.ain.rd.tut.fi/despa/manifest_fetch
-        container_name: FetchManifests
+        container_name: simces_manifest_fetch
         restart: "no"
         env_file:
             - ../access_tokens.env
@@ -22,4 +22,4 @@ services:
 volumes:
     simulation_logs:
         external: true
-        name: simulation_logs
+        name: simces_simulation_logs

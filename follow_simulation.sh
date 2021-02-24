@@ -6,10 +6,10 @@ container_prefix="Sim${1}_"
 current_color_number=1
 
 set_color_code () {
-    if [[ $1 == "simulation_manager" ]]
+    if [[ $1 == "SimulationManager" ]]
     then
         color_code="1;31"  # red
-    elif [[ $1 == "log_writer" ]]
+    elif [[ $1 == "LogWriter" ]]
     then
         color_code="1;37"  # white
     elif [[ $current_color_number == 1 ]]
@@ -35,7 +35,7 @@ set_color_code () {
     fi
 }
 
-comparison_name="simulation_manager"
+comparison_name="SimulationManager"
 
 all_commands=()
 for container in $(docker ps | awk '{print $NF}' | grep "${container_prefix}")

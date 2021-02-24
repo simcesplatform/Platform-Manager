@@ -3,8 +3,8 @@
 # Script that copies all the log files from the Docker volume to a local folder.
 # This can be useful with Docker installation where sharing local folders as Docker volumnes is limited.
 
-container="log_access"
-volume_name="simulation_logs"
+container="simces_log_access"
+volume_name="simces_simulation_logs"
 container_log_folder="logs"
 local_log_folder="."
 log_file_type="log"

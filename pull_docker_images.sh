@@ -4,7 +4,7 @@
 
 if [ -z "$1" ]
 then
-    echo "Usage: pull_docker_images.sh <file_with_docker_image_names>"
+    echo "Usage: source pull_docker_images.sh <file_with_docker_image_names>"
     return 0 2> /dev/null || exit 0
 fi
 
@@ -12,7 +12,7 @@ input_file=$1
 if ! test -f "$input_file"
 then
     echo "Cannot find file '$input_file'"
-    echo "Usage: pull_docker_images.sh <file_with_docker_image_names>"
+    echo "Usage: source pull_docker_images.sh <file_with_docker_image_names>"
     return 0 2> /dev/null || exit 0
 fi
 

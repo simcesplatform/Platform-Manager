@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Old script for fething all the source code for the core components.
+
 current_folder=$(pwd)
 read -p "Do you want clone the core component repositories to the folder $current_folder? [y/n] " answer
 if [[ -z "$answer" ]] || [[ "$answer" != "y" ]]

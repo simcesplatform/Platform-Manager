@@ -12,4 +12,4 @@ echo "Fetching the component manifests."
 docker-compose -f fetch/docker-compose-fetch.yml up
 
 echo ""
-source copy_folder_to_volume.sh resources simulation_resources /resources
+source copy_folder_to_volume.sh resources simces_simulation_resources /resources

@@ -7,7 +7,7 @@ services:
             context: .
             dockerfile: Dockerfile
         image: procem.ain.rd.tut.fi/despa/platform_manager
-        container_name: PlatformManager
+        container_name: simces_platform_manager
         restart: "no"
         env_file:
             - rabbitmq.env
@@ -27,18 +27,18 @@ services:
 volumes:
     simulation_configuration:
         external: true
-        name: simulation_configuration
+        name: simces_simulation_configuration
     simulation_logs:
         external: true
-        name: simulation_logs
+        name: simces_simulation_logs
     simulation_resources:
         external: true
-        name: simulation_resources
+        name: simces_simulation_resources
 
 networks:
     platform_network:
         external: true
-        name: platform_network
+        name: simces_platform_network
     rabbitmq_network:
         external: true
-        name: rabbitmq_network
+        name: simces_rabbitmq_network

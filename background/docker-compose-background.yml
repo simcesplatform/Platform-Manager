@@ -4,7 +4,7 @@ services:
 
     rabbitmq:
         image: rabbitmq:3.8.4-management
-        container_name: rabbitmq
+        container_name: simces_rabbitmq
         restart: always
         ports:
             - 5672:5672
@@ -16,7 +16,7 @@ services:
 
     mongodb:
         image: mongo:4.2.7
-        container_name: mongodb
+        container_name: simces_mongodb
         restart: always
         expose:
             - 27017
@@ -29,7 +29,7 @@ services:
 
     mongo_express:
         image: mongo-express:0.54.0
-        container_name: mongo_express
+        container_name: simces_mongo_express
         restart: always
         depends_on:
             - mongodb
@@ -42,7 +42,7 @@ services:
 
     log_reader:
         image: procem.ain.rd.tut.fi/despa/log_reader
-        container_name: log_reader
+        container_name: simces_log_reader
         restart: always
         depends_on:
             - mongodb
@@ -57,7 +57,7 @@ services:
 
     log_writer_management:
         image: procem.ain.rd.tut.fi/despa/log_writer
-        container_name: log_writer_management
+        container_name: simces_log_writer_management
         restart: always
         depends_on:
             - mongodb
@@ -72,15 +72,15 @@ services:
 volumes:
     mongodb_data:
         external: true
-        name: mongodb_data
+        name: simces_mongodb_data
     simulation_logs:
         external: true
-        name: simulation_logs
+        name: simces_simulation_logs
 
 networks:
     rabbitmq_network:
         external: true
-        name: rabbitmq_network
+        name: simces_rabbitmq_network
     mongodb_network:
         external: true
-        name: mongodb_network
+        name: simces_mongodb_network

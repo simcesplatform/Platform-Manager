@@ -4,7 +4,7 @@ filename=$1
 volume_name=$2
 volume_folder=$3
 
-helper_container="file_copy_container"
+helper_container="simces_file_copy_container"
 
 echo "Copying '$filename' to Docker volume '$volume_name' to folder '$volume_folder'"
 docker volume create $volume_name > /dev/null

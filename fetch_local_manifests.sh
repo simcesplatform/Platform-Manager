@@ -4,7 +4,7 @@
 
 if [ -z "$1" ]
 then
-    echo "Usage: fetch_local_manifests.sh <file_with_manifest_file_list>"
+    echo "Usage: source fetch_local_manifests.sh <file_with_manifest_file_list>"
     return 0 2> /dev/null || exit 0
 fi
 
@@ -12,7 +12,7 @@ input_file=$1
 if ! test -f "$input_file"
 then
     echo "Cannot find file '$input_file'"
-    echo "Usage: fetch_local_manifests.sh <file_with_manifest_file_list>"
+    echo "Usage: source fetch_local_manifests.sh <file_with_manifest_file_list>"
     return 0 2> /dev/null || exit 0
 fi
 
