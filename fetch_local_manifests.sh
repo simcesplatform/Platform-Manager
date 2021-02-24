@@ -30,19 +30,25 @@ do
 
     if test -f "$manifest_file"
     then
-        file_suffix=$(echo "$manifest_file" | rev | cut --delimiter="." --fields=1 | rev)
+        if [[ "$manifest_file" == *"."* ]]
+        then
+            file_suffix="${manifest_file##*.}"
+        else
+            file_suffix=""
+        fi
 
         # check that the manifest filename contains a suffix
-        if [[ "$file_suffix" != "$manifest_file" ]]
+        if [[ ! -z "$file_suffix" ]]
         then
             # check that the manifest filename suffix corresponds to a YAML file
             if [[ "$file_suffix" == "yml" ]] || [[ "$file_suffix" == "yaml" ]]
             then
-                filename=$(echo "$manifest_file" | rev | cut --delimiter="/" --fields=1 | rev)
-                component_folder=$(echo "$manifest_file" | rev | cut --delimiter="/" --fields=2 | rev)
+                filename="${manifest_file##*/}"
+                component_folder_path="${manifest_file%/*}"
+                component_folder="${component_folder_path##*/}"
 
                 # use the second to last part of the manifest file path as the component name for the target folder
-                if [[ $component_folder != *"."* ]]
+                if [[ ! -z "$component_folder" ]] && [[ $component_folder != *"."* ]]
                 then
                     target_folder="$manifest_folder/$component_folder"
                 else

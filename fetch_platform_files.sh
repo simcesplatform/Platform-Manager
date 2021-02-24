@@ -46,8 +46,11 @@ fetch_file() {
 
     if [[ $current_file == *"/"* ]]
     then
-        component_folder=$(echo "$current_file" | rev | cut --delimiter="/" --fields=2- | rev)
-        mkdir -p $component_folder
+        component_folder=${current_file%/*}
+        if [[ "$component_folder" != *"."* ]]
+        then
+            mkdir -p "$component_folder"
+        fi
     fi
 
     if [[ "$repository_type" == "gitlab" ]] && [[ ! -z "$access_token" ]]
