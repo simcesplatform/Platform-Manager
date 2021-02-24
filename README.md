@@ -2,6 +2,10 @@
 
 Platform Manager handles starting new simulations for the simulation platform.
 
+```text
+NOTE: this readme has not been updated to the current version of Platform Manager and the contents are deprecated
+```
+
 ## Setup
 
 To build the required Docker images, to make the needed static files available, and to start the background processes:
