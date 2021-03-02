@@ -41,6 +41,7 @@ platform_domain_setup.sh
 pull_docker_images.sh
 start_simulation.sh
 stop_simulation.sh
+fetch_local_manifests.sh
 
 # example simulation configurations
 simulation_configuration_ec.yml
