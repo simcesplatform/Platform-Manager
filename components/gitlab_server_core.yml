@@ -5,7 +5,6 @@ Repositories:
     - procemplus/simulation-manager:
         File: component_manifest_dummy.yml
     - procemplus/logwriter
-    - procemplus/simple-component
 
 Type: GitLab
 Host: "https://git.ain.rd.tut.fi"
