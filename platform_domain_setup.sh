@@ -9,7 +9,8 @@ source pull_docker_images.sh docker_images_domain.txt
 
 echo ""
 echo "Fetching the component manifests."
-docker-compose -f fetch/docker-compose-fetch.yml up
+docker-compose --file fetch/docker-compose-fetch.yml up
+docker-compose --file fetch/docker-compose-fetch.yml rm --force
 
 echo ""
 source copy_folder_to_volume.sh resources simces_simulation_resources /resources

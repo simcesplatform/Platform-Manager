@@ -23,8 +23,9 @@ source pull_docker_images.sh docker_images_core.txt
 
 echo ""
 echo "Starting the background Docker containers."
-docker-compose -f background/docker-compose-background.yml up --detach
+docker-compose --file background/docker-compose-background.yml up --detach
 
 echo ""
 echo "Fetching the component manifests."
-docker-compose -f fetch/docker-compose-fetch.yml up
+docker-compose --file fetch/docker-compose-fetch.yml up
+docker-compose --file fetch/docker-compose-fetch.yml rm --force
