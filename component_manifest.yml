@@ -29,7 +29,7 @@ Description: "My simulation component"
 #   - Optional: true/false
 #     - If true, the attribute can be left out when defining a new simulation run.
 #     - if false, a simulation cannot be started without giving a value for this attribute.
-#     - By default the attribute is set as required, i.e. Optional is set to true-
+#     - By default the attribute is set as required, i.e. Optional is set to false.
 #   - Default: <the_default_value_for_the_attribute>
 #     - If the default value is set, it is used as the attribute value in cases where the attribute
 #       is not given a value in the simulation configuration.
