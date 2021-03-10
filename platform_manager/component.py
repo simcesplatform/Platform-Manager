@@ -10,8 +10,6 @@ import pathlib
 from typing import Any, Dict, Optional, Tuple, Union
 
 import yaml
-from yaml.parser import ParserError
-from yaml.scanner import ScannerError
 
 from tools.tools import FullLogger
 
@@ -168,7 +166,7 @@ def load_component_parameters_from_yaml(yaml_filename: pathlib.Path) -> Optional
         LOGGER.info("Loaded definition for '{}' from {}".format(component_name, yaml_filename))
         return component_name, component_type_parameters
 
-    except (OSError, TypeError, ParserError, ScannerError) as yaml_error:
+    except (OSError, TypeError, yaml.YAMLError) as yaml_error:
         LOGGER.error("Encountered '{}' exception when loading component type definitions from '{}': {}".format(
             type(yaml_error).__name__, yaml_filename, yaml_error
         ))

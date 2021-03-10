@@ -10,8 +10,7 @@ from pathlib import Path
 from re import compile as re_compile
 from urllib.parse import quote
 from typing import Any, cast, Dict, List, Optional, Tuple, Union
-from yaml import safe_load
-from yaml.parser import ParserError
+from yaml import safe_load, YAMLError
 
 from aiohttp import ClientSession, ClientTimeout
 from aiohttp.client_exceptions import ClientError
@@ -209,7 +208,7 @@ def load_repository_parameters_from_yaml(yaml_filename: Union[str, Path]) \
             access_token=access_token
         )
 
-    except (OSError, TypeError, ParserError) as yaml_error:
+    except (OSError, TypeError, YAMLError) as yaml_error:
         LOGGER.error("Encountered '{}' exception when loading server parameters from file ´{}': {}".format(
             type(yaml_error).__name__, yaml_filename, yaml_error))
         return None
