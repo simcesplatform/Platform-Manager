@@ -17,7 +17,7 @@ then
 fi
 
 echo "Reading '$input_file' for Docker image names"
-while read -r docker_image
+while IFS= read -r docker_image || [ -n "$docker_image" ]
 do
     first_character=${docker_image:0:1}
     # check that the current line is not a comment or empty line
