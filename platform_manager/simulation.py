@@ -183,6 +183,6 @@ def load_simulation_parameters_from_yaml(yaml_filename: str) -> Optional[Simulat
 
     except (OSError, KeyError, yaml.YAMLError) as yaml_error:
         LOGGER.error("Encountered '{}' exception when loading simulation run specification from '{}': {}".format(
-            str(type(yaml_error)), yaml_filename, yaml_error
+            type(yaml_error).__name__, yaml_filename, yaml_error
         ))
         return None

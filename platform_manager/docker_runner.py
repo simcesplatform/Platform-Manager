@@ -237,7 +237,7 @@ class ContainerStarter:
         async with self.__lock:
             simulation_index = await self.get_next_simulation_index()
             if simulation_index is None:
-                LOGGER.warning("No free simulation indexes.")
+                LOGGER.warning("No free simulation indexes. Wait until a simulation run has finished.")
                 return None
 
             simulation_containers = []  # type: List[Union[DockerContainer, Container]]
@@ -250,7 +250,25 @@ class ContainerStarter:
 
                 new_container = await self.create_container(full_container_name, container_configuration)
                 if new_container is None:
+                    # clean the already created containers
+                    LOGGER.warning("Removing containers that have been created.")
+
+                    for container_name, created_container in zip(container_names, simulation_containers):
+                        LOGGER.warning("Removing container: {}".format(container_name))
+                        if isinstance(created_container, DockerContainer):
+                            # remove container created with aiodocker library
+                            await created_container.delete()
+                        elif isinstance(created_container, Container):
+                            # remove container created with docker library
+                            await async_wrap(created_container.remove)()
+                        else:
+                            LOGGER.error("An unknown container type, {}, for container: {}".format(
+                                type(created_container).__name__, container_name))
+
+                    # return None to indicate that there was a problem in the container creation
                     return None
+
+                # add the newly created container to the container list
                 simulation_containers.append(new_container)
 
             # start the created containers
