@@ -5,6 +5,7 @@
 """
 
 import logging
+import json
 import pathlib
 from typing import Any, cast, Dict, List, Optional
 
@@ -47,6 +48,7 @@ RABBITMQ_EXCHANGE_PREFIX = "RABBITMQ_EXCHANGE_PREFIX"
 MONGODB_APPNAME = "MONGODB_APPNAME"
 
 MANIFEST_FOLDER = "MANIFEST_FOLDER"
+START_MESSAGE_FOLDER = "START_MESSAGE_FOLDER"
 
 DOCKER_NETWORK_MONGODB = "DOCKER_NETWORK_MONGODB"
 DOCKER_NETWORK_RABBITMQ = "DOCKER_NETWORK_RABBITMQ"
@@ -54,8 +56,9 @@ DOCKER_NETWORK_PLATFORM = "DOCKER_NETWORK_PLATFORM"
 DOCKER_VOLUME_NAME_RESOURCES = "DOCKER_VOLUME_NAME_RESOURCES"
 DOCKER_VOLUME_NAME_LOGS = "DOCKER_VOLUME_NAME_LOGS"
 DOCKER_VOLUME_TARGET_RESOURCES = "DOCKER_VOLUME_TARGET_RESOURCES"
-DOCKET_VOLUME_TARGET_LOGS = "DOCKET_VOLUME_TARGET_LOGS"
+DOCKER_VOLUME_TARGET_LOGS = "DOCKER_VOLUME_TARGET_LOGS"
 
+# Attribute names for the simulation configuration file
 START = "Start"
 START_MESSAGE_TYPE = "Type"
 START_MESSAGE_TIMESTAMP = "Timestamp"
@@ -64,6 +67,34 @@ START_MESSAGE_SIMULATION_SPECIFIC_EXCHANGE = "SimulationSpecificExchange"
 START_MESSAGE_NAME = "SimulationName"
 START_MESSAGE_DESCRIPTION = "SimulationDescription"
 START_MESSAGE_PROCESS_PARAMETERS = "ProcessParameters"
+
+# The filename for a stored Start message
+START_MESSAGE_FILENAME_TEMPLATE = "start_message_{simulation_exchange:}.json"
+
+# The environment variable name for containing the filename that will contain the JSON formatted Start message
+SIMULATION_START_MESSAGE_FILENAME = "SIMULATION_START_MESSAGE_FILENAME"
+
+
+# This helper function is a copy from fetch/fetch.py
+def create_folder(target_folder: pathlib.Path):
+    """Creates the target folder if it does not exist yet."""
+    try:
+        if target_folder.exists():
+            if not target_folder.is_dir():
+                LOGGER.warning("'{}' is not a directory".format(target_folder))
+            return
+
+        resolved_target = target_folder.resolve()
+        if resolved_target.parent != resolved_target and not resolved_target.parent.is_dir():
+            create_folder(resolved_target.parent)
+        resolved_target.mkdir()
+        # change the permission to allow read-write access to the folder for all users
+        resolved_target.chmod(0o777)
+
+    except OSError as os_error:
+        LOGGER.error("Received '{}' while creating folder '{}': {}".format(
+            type(os_error).__name__, target_folder, os_error
+        ))
 
 
 class PlatformEnvironment:
@@ -103,6 +134,11 @@ class PlatformEnvironment:
         self.__manifest_folder = pathlib.Path(cast(str, EnvironmentVariable(MANIFEST_FOLDER, str, "/manifests").value))
         self.__read_manifest_folder(self.__manifest_folder)
 
+        self.__start_message_folder = pathlib.Path(
+            cast(str, EnvironmentVariable(START_MESSAGE_FOLDER, str, "/logs/start").value)
+        )
+        create_folder(self.__start_message_folder)
+
         # load the Docker network and volume related variables
         self.__docker = load_environmental_variables(
             (DOCKER_NETWORK_MONGODB, str),
@@ -111,7 +147,7 @@ class PlatformEnvironment:
             (DOCKER_VOLUME_NAME_RESOURCES, str),
             (DOCKER_VOLUME_NAME_LOGS, str),
             (DOCKER_VOLUME_TARGET_RESOURCES, str, ""),
-            (DOCKET_VOLUME_TARGET_LOGS, str, "")
+            (DOCKER_VOLUME_TARGET_LOGS, str, "")
         )
 
     def get_rabbitmq_parameters(self, simulation_id: str) -> Dict[str, EnvironmentVariableValue]:
@@ -162,7 +198,7 @@ class PlatformEnvironment:
         if logs and self.__docker[DOCKER_VOLUME_NAME_LOGS]:
             docker_volumes.append(":".join([
                 cast(str, self.__docker[DOCKER_VOLUME_NAME_LOGS]),
-                cast(str, self.__docker[DOCKET_VOLUME_TARGET_LOGS])
+                cast(str, self.__docker[DOCKER_VOLUME_TARGET_LOGS])
             ]))
         return docker_volumes
 
@@ -213,7 +249,9 @@ class PlatformEnvironment:
                 **self.__common,
                 SIMULATION_ID: simulation_id,
                 SIMULATION_COMPONENT_NAME: component_name,
-                SIMULATION_LOG_FILE: self.get_component_log_filename(component_name)
+                SIMULATION_LOG_FILE: self.get_component_log_filename(component_name),
+                SIMULATION_START_MESSAGE_FILENAME: str(self.get_start_message_filename(
+                    self.get_simulation_exchange_name(simulation_id)))
             }
         return env_variables  # type: ignore
 
@@ -373,6 +411,28 @@ class PlatformEnvironment:
 
         return start_message
 
+    def store_start_message(self, start_message: Dict[str, Any]) -> bool:
+        """Stores the given Start message to a file."""
+        try:
+            # at this point it is assumed that the target folder exists and is writable
+            # also, it is assumed that the given message is a valid Start message
+            simulation_exchange = start_message.get(START_MESSAGE_SIMULATION_SPECIFIC_EXCHANGE, None)
+            if not isinstance(simulation_exchange, str):
+                LOGGER.error("No simulation specific exchange found in the Start message")
+                return False
+
+            start_message_str = json.dumps(start_message, indent=4)
+            full_filename = self.get_start_message_filename(cast(str, simulation_exchange))
+            with open(full_filename, mode="w", encoding="UTF-8") as start_message_file:
+                start_message_file.write(start_message_str + "\n")
+
+            return True
+
+        except (OSError, TypeError, OverflowError, ValueError) as error:
+            LOGGER.error("Exception '{}' when trying to save the Start message to file: {}".format(
+                type(error).__name__, error))
+            return False
+
     def register_component_type(self, component_type: str, component_type_definition: Dict[str, Any],
                                 replace: bool = True) -> bool:
         """Registers a new (or updates a registered) component type to the platform environment."""
@@ -387,6 +447,11 @@ class PlatformEnvironment:
 
         check = self.__supported_component_types.add_type(component_type, component_type_parameters, replace)
         return check
+
+    def get_start_message_filename(self, simulation_exchange: str) -> pathlib.Path:
+        """Returns the full filename where the JSON formatted Start message will be stored."""
+        simple_filename = pathlib.Path(START_MESSAGE_FILENAME_TEMPLATE.format(simulation_exchange=simulation_exchange))
+        return self.__start_message_folder / simple_filename
 
     def __read_manifest_folder(self, manifest_folder: pathlib.Path):
         """

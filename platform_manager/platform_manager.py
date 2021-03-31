@@ -83,6 +83,9 @@ class PlatformManager:
         if start_message is None:
             LOGGER.error("Could not create the Start message.")
             return False
+        start_message_filename = self.__platform_environment.store_start_message(start_message)
+        if start_message_filename is None:
+            LOGGER.warning("Could not save the Start message to a file.")
 
         LOGGER.info("Starting the Docker containers for simulation: '{:s}' with id: {:s}".format(
             simulation_name, simulation_id))
