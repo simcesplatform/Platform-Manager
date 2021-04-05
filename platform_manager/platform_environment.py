@@ -12,7 +12,8 @@ from typing import Any, cast, Dict, List, Optional
 from tools.clients import default_env_variable_definitions as default_rabbitmq_definitions
 from tools.components import (
     SIMULATION_COMPONENT_NAME, SIMULATION_ID, SIMULATION_STATE_MESSAGE_TOPIC,
-    SIMULATION_EPOCH_MESSAGE_TOPIC, SIMULATION_STATUS_MESSAGE_TOPIC, SIMULATION_ERROR_MESSAGE_TOPIC)
+    SIMULATION_EPOCH_MESSAGE_TOPIC, SIMULATION_STATUS_MESSAGE_TOPIC, SIMULATION_ERROR_MESSAGE_TOPIC,
+    SIMULATION_START_MESSAGE_FILENAME)
 from tools.db_clients import default_env_variable_definitions as default_mongodb_definitions
 from tools.datetime_tools import get_utcnow_in_milliseconds
 from tools.tools import (
@@ -70,9 +71,6 @@ START_MESSAGE_PROCESS_PARAMETERS = "ProcessParameters"
 
 # The filename for a stored Start message
 START_MESSAGE_FILENAME_TEMPLATE = "start_message_{simulation_exchange:}.json"
-
-# The environment variable name for containing the filename that will contain the JSON formatted Start message
-SIMULATION_START_MESSAGE_FILENAME = "SIMULATION_START_MESSAGE_FILENAME"
 
 
 # This helper function is a copy from fetch/fetch.py
