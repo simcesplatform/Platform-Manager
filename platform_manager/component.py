@@ -119,6 +119,10 @@ def get_component_type_parameters(component_type_definition: Dict[str, Any]) -> 
     if isinstance(docker_image, str):
         docker_image = ImageName(*docker_image.split(":"))
 
+    attribute_parameters = component_type_definition.get(PARAMETER_ATTRIBUTES, {})
+    if not isinstance(attribute_parameters, dict):
+        attribute_parameters = {}
+
     return ComponentParameters(
         component_type=deployment_type,
         description=component_type_definition.get(PARAMETER_DESCRIPTION, ""),
@@ -130,8 +134,7 @@ def get_component_type_parameters(component_type_definition: Dict[str, Any]) -> 
                 default=attribute_definition.get(ATTRIBUTE_DEFAULT, None),
                 include_in_start=attribute_definition.get(ATTRIBUTE_INCLUDE_IN_START, True)
             )
-            for attribute_name, attribute_definition in component_type_definition.get(
-                PARAMETER_ATTRIBUTES, {}).items()
+            for attribute_name, attribute_definition in attribute_parameters.items()
             if isinstance(attribute_definition, dict)
         },
         include_rabbitmq_parameters=deployment_type != EXTERNAL_COMPONENT_TYPE,
