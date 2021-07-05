@@ -28,7 +28,7 @@ services:
             - mongodb_network
 
     mongo_express:
-        image: mongo-express:0.54.0
+        image: procem.ain.rd.tut.fi/despa/mongo-express:latest
         container_name: simces_mongo_express
         restart: always
         depends_on:

@@ -7,3 +7,4 @@ procem.ain.rd.tut.fi/despa/log_writer:latest
 procem.ain.rd.tut.fi/despa/log_reader:latest
 procem.ain.rd.tut.fi/despa/dummy:latest
 procem.ain.rd.tut.fi/despa/manifest_fetch:latest
+procem.ain.rd.tut.fi/despa/mongo-express:latest
