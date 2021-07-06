@@ -13,7 +13,7 @@ then
 fi
 
 current_folder=$(pwd)
-read -p "Do you want install the simulation platform to the folder $current_folder? [y/n] " answer
+read -p "Do you want to install the simulation platform to the folder $current_folder? [y/n] " answer
 if [[ -z "$answer" ]] || [[ "$answer" != "y" ]]
 then
     return 0 2> /dev/null || exit 0
