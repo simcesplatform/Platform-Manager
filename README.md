@@ -4,6 +4,8 @@ Platform Manager handles starting new simulations for the simulation platform.
 
 ```text
 NOTE: this readme has not been updated to the current version of Platform Manager and the contents are deprecated
+
+See the simulation platform documentation on how to use the available scripts to install the platform and on how o run simulations.
 ```
 
 ## Setup

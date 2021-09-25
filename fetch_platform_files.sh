@@ -1,4 +1,9 @@
 #!/bin/bash
+# Copyright 2021 Tampere University and VTT Technical Research Centre of Finland
+# This software was developed as a part of the ProCemPlus project: https://www.senecc.fi/projects/procemplus
+# This source code is licensed under the MIT license. See LICENSE in the repository root directory.
+# Author(s): Ville Heikkilä <ville.heikkila@tuni.fi>
+#            Otto Hylli <otto.hylli@tuni.fi>
 
 # Fetches all the files required to install the simulation platform and run simulations.
 
@@ -20,10 +25,18 @@ then
 fi
 
 # hard coded values for the repository
-repository_name="procemplus/platform-manager"
-repository_host="https://git.ain.rd.tut.fi"
+if [[ "$repository_type" == "gitlab" ]]
+then
+    repository_host="https://git.ain.rd.tut.fi"
+    repository_name="procemplus/platform-manager"
+    repository_ssl="false"
+else
+    repository_host="https://github.com"
+    repository_name="simcesplatform/platform-manager"
+    repository_ssl="true"
+fi
+
 repository_branch="master"
-repository_ssl="false"
 file_list_file="platform_file_list.txt"
 access_token_file="access_tokens.env"
 
