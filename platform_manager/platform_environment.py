@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# Copyright 2021 Tampere University and VTT Technical Research Centre of Finland
+# This software was developed as a part of the ProCemPlus project: https://www.senecc.fi/projects/procemplus
+# This source code is licensed under the MIT license. See LICENSE in the repository root directory.
+# Author(s): Ville Heikkilä <ville.heikkila@tuni.fi>
 
 """This module contains the Platform Manager code that handles the starting of the simulation components for
    a simulation using the simulation platform.
@@ -346,7 +350,10 @@ class PlatformEnvironment:
                     container_configurations.append(
                         ContainerConfiguration(
                             container_name=full_component_name,
-                            docker_image=component_type_settings.docker_image.full_name,
+                            docker_image=(
+                                "unknown" if component_type_settings.docker_image is None
+                                else component_type_settings.docker_image.full_name
+                            ),
                             environment=environment_variables,
                             networks=self.get_docker_networks(
                                 rabbitmq=component_type_settings.include_rabbitmq_parameters,

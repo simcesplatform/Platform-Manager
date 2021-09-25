@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# Copyright 2021 Tampere University and VTT Technical Research Centre of Finland
+# This software was developed as a part of the ProCemPlus project: https://www.senecc.fi/projects/procemplus
+# This source code is licensed under the MIT license. See LICENSE in the repository root directory.
+# Author(s): Ville Heikkilä <ville.heikkila@tuni.fi>
 
 """
 This module fetches files from GitLab or GitHub repositories.
@@ -151,8 +155,7 @@ def create_repository_configurations(configuration: Any) -> List[RepositoryFileC
         return create_repository_configurations_from_list(configuration)
     elif isinstance(configuration, dict):
         return create_repository_configurations_from_dict(configuration)
-    else:
-        return []
+    return []
 
 
 def load_repository_parameters_from_yaml(yaml_filename: Union[str, Path]) \
