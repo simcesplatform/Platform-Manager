@@ -6,7 +6,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
-        image: procem.ain.rd.tut.fi/despa/platform_manager
+        image: ghcr.io/simcesplatform/platform-manager:latest
         container_name: simces_platform_manager
         restart: "no"
         env_file:

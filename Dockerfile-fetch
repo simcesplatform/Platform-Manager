@@ -1,4 +1,6 @@
 FROM python:3.7.9
+LABEL org.opencontainers.image.source https://github.com/simcesplatform/platform-manager
+LABEL org.opencontainers.image.description "Docker image for the manifest file fetcher. Docker image source: Dockerfile-fetch"
 
 RUN mkdir -p /fetch
 RUN mkdir -p /init

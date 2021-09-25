@@ -1,12 +1,11 @@
 # Example for defining the GitHub repositories where manifest files should be fetched
 
 Repositories:
-    # - simces/logwriter
-    # - simces/simple-component
-    # - simces/simulation-manager:
-    #     File: component_manifest_manager.yml
-    # - simces/simulation-manager:
-    #     File: component_manifest_dummy.yml
+    - simcesplatform/simulation-manager:
+        File: component_manifest_manager.yml
+    - simcesplatform/simulation-manager:
+        File: component_manifest_dummy.yml
+    - simcesplatform/logwriter
 
 Type: GitHub
 

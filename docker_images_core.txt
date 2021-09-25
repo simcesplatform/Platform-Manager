@@ -1,10 +1,10 @@
 # The file list for the Docker images for the core components of the simulation platform.
 # lines started with a hash character are ignored
 
-procem.ain.rd.tut.fi/despa/platform_manager:latest
-procem.ain.rd.tut.fi/despa/simulation_manager:latest
-procem.ain.rd.tut.fi/despa/log_writer:latest
-procem.ain.rd.tut.fi/despa/log_reader:latest
-procem.ain.rd.tut.fi/despa/dummy:latest
-procem.ain.rd.tut.fi/despa/manifest_fetch:latest
-procem.ain.rd.tut.fi/despa/mongo-express:latest
+ghcr.io/simcesplatform/platform-manager:latest
+ghcr.io/simcesplatform/simulation-manager:latest
+ghcr.io/simcesplatform/logwriter:latest
+ghcr.io/simcesplatform/logreader:latest
+ghcr.io/simcesplatform/dummy-component:latest
+ghcr.io/simcesplatform/manifest-fetcher:latest
+ghcr.io/simcesplatform/mongo-express:latest

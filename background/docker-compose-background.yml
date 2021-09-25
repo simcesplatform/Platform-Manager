@@ -28,7 +28,7 @@ services:
             - mongodb_network
 
     mongo_express:
-        image: procem.ain.rd.tut.fi/despa/mongo-express:latest
+        image: ghcr.io/simcesplatform/mongo-express:latest
         container_name: simces_mongo_express
         restart: always
         depends_on:
@@ -41,7 +41,7 @@ services:
             - mongodb_network
 
     log_reader:
-        image: procem.ain.rd.tut.fi/despa/log_reader
+        image: ghcr.io/simcesplatform/logreader
         container_name: simces_log_reader
         restart: always
         depends_on:
@@ -56,7 +56,7 @@ services:
             - mongodb_network
 
     log_writer_management:
-        image: procem.ain.rd.tut.fi/despa/log_writer
+        image: ghcr.io/simcesplatform/logwriter
         container_name: simces_log_writer_management
         restart: always
         depends_on:

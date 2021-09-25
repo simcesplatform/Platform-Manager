@@ -6,8 +6,8 @@ services:
         build:
             context: ..
             dockerfile: Dockerfile-fetch
-        image: procem.ain.rd.tut.fi/despa/manifest_fetch
-        container_name: simces_manifest_fetch
+        image: ghcr.io/simcesplatform/manifest-fetcher
+        container_name: simces_manifest_fetcher
         restart: "no"
         env_file:
             - ../access_tokens.env
