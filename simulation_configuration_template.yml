@@ -11,7 +11,7 @@ Simulation:
 
     # Optional settings for the Simulation Manager, uncomment and change the value to override the default value
     # See the Start message specification for information about each parameter:
-    # https://wiki.eduuni.fi/pages/viewpage.action?pageId=164959964#Start(message)-SimulationManagerblock
+    # https://simcesplatform.github.io/core_msg-start/#simulation-manager-block
     #
     # ManagerName: "SimulationManager"
     # EpochTimerInterval: 120
@@ -19,7 +19,7 @@ Simulation:
 
     # Optional settings for the Log Writer, uncomment and change the value to override the default value
     # See the Start message specification for information about each parameter:
-    # https://wiki.eduuni.fi/pages/viewpage.action?pageId=164959964#Start(message)-LogWriterblock
+    # https://simcesplatform.github.io/core_msg-start/#dummy-component-block
     #
     # MessageBufferMaxDocumentCount: 20
     # MessageBufferMaxInterval: 10.0
