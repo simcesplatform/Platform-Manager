@@ -23,7 +23,8 @@ background/env/mongo_express.env
 background/env/mongodb.env
 background/env/rabbitmq.env
 
-components/github_server.yml
+components/github_server_core.yml
+components/github_server_domain.yml
 components/gitlab_server_core.yml
 components/gitlab_server_domain.yml
 
