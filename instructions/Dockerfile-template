@@ -3,7 +3,7 @@
 # the Static Time Series Resource component and should be changed
 
 # define the version of Python here
-FROM python:3.7.9
+FROM python:3.7.16
 
 # optional labels to provide metadata for the Docker image
 # (source: address to the repository, description: human-readable description)
