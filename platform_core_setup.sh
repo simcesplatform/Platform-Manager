@@ -6,11 +6,7 @@
 
 # Builds the core components and starts the background containers for the Simulation platform.
 
-exists() {
-    command -v "$1" >/dev/null 2>&1;
-}
-
-if exists "docker compose"
+if docker compose version >/dev/null 2>&1
 then
     compose_command="docker compose"
 else

@@ -7,11 +7,7 @@
 # Fetches the Docker images and component manifest files for the domain component for the Simulation platform.
 # Also makes the resource files available for the Simulation platform.
 
-exists() {
-    command -v "$1" >/dev/null 2>&1;
-}
-
-if exists "docker compose"
+if docker compose version >/dev/null 2>&1
 then
     compose_command="docker compose"
 else
